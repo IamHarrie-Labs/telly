@@ -37,10 +37,16 @@
 
         <h2>What Telly stores</h2>
         <ul>
-          <li><strong>Your Buffer sign-in tokens</strong> stay in an encrypted cookie in your own browser. They are not saved in a database.</li>
+          <li><strong>Your Buffer sign-in tokens</strong> stay in an encrypted cookie in your own browser. They are not saved in a database, unless you turn on watching (below).</li>
           <li><strong>Each campaign</strong> is saved in a database: the event details you typed, your Buffer account ID, the IDs of the Buffer posts Telly created, and the text, times and event card Telly last wrote to them. Telly needs this to notice when a post was edited by hand.</li>
+          <li><strong>Request counts.</strong> To stop runaway scripts, Telly counts requests per minute from each internet address. It stores a scrambled, one-way version of the address, never the address itself, and clears the counts within minutes.</li>
+          <li><strong>Error reports.</strong> If something breaks in the page or on the server, Telly records the error message and the page it happened on, so it can be fixed. These reports don't include your posts or event details.</li>
+          <li><strong>Feedback</strong> you send through the feedback page is saved with your Buffer account ID, if you're signed in.</li>
         </ul>
         <p>Telly has no analytics, no advertising and no tracking cookies. It does not sell or share your data. The database is hosted by Neon and the app by Vercel.</p>
+
+        <h2>Watching in the background (optional)</h2>
+        <p>Watching is off unless you turn it on. When it's on, Telly moves your Buffer sign-in tokens from your browser cookie into its database, encrypted with a key only the server holds, so it can check your upcoming posts a few times a day while you're away. If you give an email address, Telly saves it and uses it only to tell you when a post needs attention. Those emails are sent through Resend. Turning watching off, or using <strong>Delete my Telly data</strong>, deletes the stored tokens and the email address straight away.</p>
 
         <h2>The demo</h2>
         <p>The demo works without a Buffer account. Its campaigns and practice posts are kept in the same database under a random demo ID, never reach Buffer or any social network, and are deleted after seven days.</p>
@@ -55,7 +61,7 @@
         <p>If you upload a flyer, the image is sent once to Anthropic's Claude API so it can read the event details. Telly does not save the image. Anthropic handles it under its commercial terms and does not use it to train models. Uploading a flyer is optional; you can always type the details instead.</p>
 
         <h2>Deleting your data</h2>
-        <p>While connected, use <strong>Delete my Telly data</strong> at the bottom of the app to remove every campaign Telly saved for your account. <strong>Disconnect</strong> removes the sign-in cookie from your browser. Posts already scheduled in Buffer stay in Buffer; remove those there if you want them gone. You can also revoke Telly's access at any time from your Buffer account settings.</p>
+        <p>While connected, use <strong>Delete my Telly data</strong> at the bottom of the app to remove every campaign Telly saved for your account and turn off watching. <strong>Disconnect</strong> removes the sign-in cookie from your browser. Posts already scheduled in Buffer stay in Buffer; remove those there if you want them gone. You can also revoke Telly's access at any time from your Buffer account settings.</p>
       </article>
 
       <footer class="app-footer">
@@ -67,6 +73,9 @@
           <div class="app-footer-links">
             <a class="u-link" href="/"><span>Home</span></a>
             <a class="u-link" href="/auth/login"><span>Connect Buffer</span></a>
+            <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
+            <a class="u-link" href="/terms.html"><span>Terms</span></a>
+            <a class="u-link" href="/feedback.html"><span>Feedback</span></a>
           </div>
         </div>
         <p class="app-footer-note">An independent app built on the Buffer API. Not made or endorsed by Buffer.</p>

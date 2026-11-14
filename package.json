@@ -10,7 +10,11 @@
   "scripts": {
     "start": "node server.js",
     "certs": "node scripts/generate-cert.js",
-    "test": "node --test"
+    "test": "node --test",
+    "e2e": "node e2e/run.mjs",
+    "migrate": "node scripts/migrate.js",
+    "check": "npm test && npm run e2e && npm audit --omit=dev --audit-level=high",
+    "ship": "npm run check && vercel deploy --prod"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

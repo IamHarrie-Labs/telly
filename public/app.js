@@ -3,6 +3,21 @@
 
 import { startLanding } from '/landing.js';
 
+// Report unexpected errors in this page to the server (a few per visit at most), so problems
+// people hit show up in Telly's alerts instead of going unnoticed.
+let reported = 0;
+function reportError(message, source, line) {
+  if (reported++ >= 5) return;
+  fetch('/api/client-error', {
+    method: 'POST',
+    keepalive: true,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: String(message || 'Unknown error').slice(0, 300), source, line, page: location.pathname }),
+  }).catch(() => {});
+}
+addEventListener('error', (event) => reportError(event.message, event.filename, event.lineno));
+addEventListener('unhandledrejection', (event) => reportError(event.reason?.message || event.reason, 'promise'));
+
 const $ = (id) => document.getElementById(id);
 const VIEWS = ['view-campaigns', 'view-editor', 'view-campaign', 'view-review'];
 const KIND = { announcement: 'Announcement', reminder: 'Reminder', dayOf: 'Day of', followUp: 'Follow-up' };
@@ -813,11 +828,12 @@ async function init() {
 
   $('delete-data').hidden = false;
   $('delete-data').addEventListener('click', () => {
-    const ok = confirm('Delete every campaign Telly has saved for your account? Posts already in Buffer stay in Buffer. This cannot be undone.');
+    const ok = confirm('Delete every campaign Telly has saved for your account, and turn off watching? Posts already in Buffer stay in Buffer. This cannot be undone.');
     if (!ok) return;
     busy($('delete-data'), async () => {
       const { removed } = await api('/api/campaigns', { method: 'DELETE' });
       await loadCampaigns();
+      loadWatch();
       show('view-campaigns');
       showNotice(`Deleted ${removed} saved campaign${removed === 1 ? '' : 's'} from Telly.`);
     });
@@ -835,7 +851,65 @@ async function init() {
   }
   setMode('app');
   show('view-campaigns');
+  if (!state.demo) loadWatch();
 }
+
+// ---- Background watching -----------------------------------------------------------
+
+async function loadWatch() {
+  try {
+    renderWatch(await api('/api/watch'));
+  } catch {
+    $('watch').hidden = true;
+  }
+}
+
+function renderWatch(watch) {
+  $('watch').hidden = !watch.available;
+  if (!watch.available) return;
+  const where = watch.emails ? (watch.enabled && watch.email ? `emails ${watch.email}` : 'emails you') : 'shows it here';
+  $('watch-pill').replaceChildren(watch.enabled ? pill('On', 'ok') : pill('Off', 'neutral'));
+  const every = watch.everyHours === 1 ? 'every hour' : `every ${watch.everyHours || 6} hours`;
+  $('watch-explain').textContent = watch.enabled
+    ? `Telly checks your upcoming posts in Buffer ${every}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. It keeps going after you disconnect. Turn it off here to stop.`
+    : `Telly can check your upcoming posts in Buffer ${every}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. To do that, it keeps your Buffer connection in its database, encrypted. Turning watching off deletes it.`;
+
+  const issues = watch.enabled ? watch.issues || [] : [];
+  $('watch-issues').replaceChildren(...issues.map((issue) => el('li', {}, issue.text)));
+  $('watch-issues').hidden = !issues.length;
+
+  let status = '';
+  if (watch.lastError === 'reconnect') status = 'Buffer stopped accepting Telly’s stored connection. Disconnect and connect again to restart watching.';
+  else if (watch.enabled && watch.checkedAt) {
+    const at = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(watch.checkedAt));
+    status = issues.length ? `Last checked ${at}.` : `Last checked ${at}. Nothing needs you.`;
+  } else if (watch.enabled) status = 'Turned on. The first check runs within the next half hour.';
+  $('watch-status').textContent = status;
+
+  $('watch-form').hidden = watch.enabled;
+  $('watch-off').hidden = !watch.enabled;
+  $('watch-email-field').hidden = !watch.emails;
+  $('watch-email').required = watch.emails;
+  if (watch.email) $('watch-email').value = watch.email;
+}
+
+$('watch-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  busy($('watch-on'), async () => {
+    const watch = await api('/api/watch', { method: 'POST', body: JSON.stringify({ email: $('watch-email').value.trim() }) });
+    renderWatch(watch);
+    showNotice('Watching is on.');
+  });
+});
+
+$('watch-off').addEventListener('click', () => {
+  busy($('watch-off'), async () => {
+    const watch = await api('/api/watch', { method: 'DELETE' });
+    if (watch.reconnect) return location.reload();
+    renderWatch(watch);
+    showNotice('Watching is off, and Telly deleted the stored Buffer connection.');
+  });
+});
 
 // ---- Developer lab -----------------------------------------------------------------
 

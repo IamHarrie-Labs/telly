@@ -438,13 +438,18 @@
                   </div>
                   <div>
                     <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
+                    <a class="u-link" href="/terms.html"><span>Terms</span></a>
+                    <a class="u-link" href="/feedback.html"><span>Send feedback</span></a>
                     <a class="u-link" href="https://buffer.com" rel="noopener"><span>Buffer</span></a>
                   </div>
                 </div>
               </div>
               <div class="footer-bottom">
                 <span>© 2026 Telly. Made for Buffer Commit.</span>
-                <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
+                <span class="footer-bottom-links">
+                  <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
+                  <a class="u-link" href="/terms.html"><span>Terms</span></a>
+                </span>
               </div>
             </div>
             <p class="footer-disclaimer">Telly is an independent app built on the Buffer API. It is not made or endorsed by Buffer. Telly schedules, edits and removes posts only through your connected Buffer account and only when you approve.</p>
@@ -469,6 +474,24 @@
             </div>
           </div>
           <ul id="campaign-list" class="list"></ul>
+
+          <section id="watch" class="card watch" hidden aria-labelledby="watch-title">
+            <div class="watch-head">
+              <h3 id="watch-title" class="watch-title">Keep watching when I'm away</h3>
+              <span id="watch-pill"></span>
+            </div>
+            <p id="watch-explain" class="watch-explain"></p>
+            <ul id="watch-issues" class="watch-issues" hidden aria-label="What needs attention"></ul>
+            <p id="watch-status" class="muted small-text" aria-live="polite"></p>
+            <form id="watch-form" class="watch-form">
+              <div id="watch-email-field" class="watch-email">
+                <label for="watch-email">Email me at</label>
+                <input id="watch-email" name="email" type="email" autocomplete="email" inputmode="email" />
+              </div>
+              <button id="watch-on" type="submit" class="primary">Turn on watching</button>
+            </form>
+            <button id="watch-off" type="button" hidden>Turn off watching</button>
+          </section>
         </section>
 
         <section id="view-editor" class="view" hidden aria-labelledby="editor-title">
@@ -609,6 +632,8 @@
               <span>Telly</span>
             </a>
             <div class="app-footer-links">
+              <a class="u-link" href="/feedback.html"><span>Send feedback</span></a>
+              <a class="u-link" href="/terms.html"><span>Terms</span></a>
               <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
               <button id="delete-data" type="button" class="ghost small" hidden>Delete my Telly data</button>
             </div>
