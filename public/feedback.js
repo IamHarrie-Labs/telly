@@ -17,7 +17,7 @@ form.addEventListener('submit', async (event) => {
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.error || 'That didn’t send. Try again in a moment.');
     form.message.value = '';
-    result.textContent = 'Thanks. That reached us.';
+    result.textContent = 'Thanks for letting us know.';
   } catch (error) {
     result.textContent = error.message;
   } finally {

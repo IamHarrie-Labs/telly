@@ -43,10 +43,10 @@
           <li><strong>Error reports.</strong> If something breaks in the page or on the server, Telly records the error message and the page it happened on, so it can be fixed. These reports don't include your posts or event details.</li>
           <li><strong>Feedback</strong> you send through the feedback page is saved with your Buffer account ID, if you're signed in.</li>
         </ul>
-        <p>Telly has no analytics, no advertising and no tracking cookies. It does not sell or share your data. The database is hosted by Neon and the app by Vercel.</p>
+        <p>Telly has no analytics, advertising or tracking cookies and does not sell your data. Neon hosts the database and Vercel runs the app. The optional flyer and email services are described below.</p>
 
         <h2>Watching in the background (optional)</h2>
-        <p>Watching is off unless you turn it on. When it's on, Telly moves your Buffer sign-in tokens from your browser cookie into its database, encrypted with a key only the server holds, so it can check your upcoming posts a few times a day while you're away. If you give an email address, Telly saves it and uses it only to tell you when a post needs attention. Those emails are sent through Resend. Turning watching off, or using <strong>Delete my Telly data</strong>, deletes the stored tokens and the email address straight away.</p>
+        <p>Watching is off unless you turn it on. When it's on, Telly moves your Buffer sign-in tokens from your browser cookie into its database, encrypted with a key only the server holds, so it can check your upcoming posts during scheduled background runs while you're away. If you give an email address, Telly saves it and uses it only to tell you when a post needs attention. Those emails are sent through Resend. Turning watching off, or using <strong>Delete my Telly data</strong>, deletes the stored tokens and the email address straight away.</p>
 
         <h2>The demo</h2>
         <p>The demo works without a Buffer account. Its campaigns and practice posts are kept in the same database under a random demo ID, never reach Buffer or any social network, and are deleted after seven days.</p>
@@ -55,10 +55,10 @@
         <p>If you leave "Add this event card" ticked, Telly draws a picture of the event's title, date, time, venue and price and attaches it to each post. The picture isn't stored anywhere: its web address carries those details, signed so only Telly can make one, and the image is drawn when Buffer or a reader opens it. Anyone with the address can see the card, just as anyone can see the post it's on.</p>
 
         <h2>Listen</h2>
-        <p>The Listen button uses your browser's built-in voice. The text is read on your device and is not sent to Telly.</p>
+        <p>The Listen button uses your browser's built-in voice. Your browser handles the speech and the choice of voice. Telly does not receive the speech request.</p>
 
         <h2>Reading a flyer</h2>
-        <p>If you upload a flyer, the image is sent once to Anthropic's Claude API so it can read the event details. Telly does not save the image. Anthropic handles it under its commercial terms and does not use it to train models. Uploading a flyer is optional; you can always type the details instead.</p>
+        <p>If you upload a flyer, Telly sends the image to Anthropic's Claude API to read the event details. Telly does not save the image. You can type the details instead if you'd rather not upload a flyer.</p>
 
         <h2>Deleting your data</h2>
         <p>While connected, use <strong>Delete my Telly data</strong> at the bottom of the app to remove every campaign Telly saved for your account and turn off watching. <strong>Disconnect</strong> removes the sign-in cookie from your browser. Posts already scheduled in Buffer stay in Buffer; remove those there if you want them gone. You can also revoke Telly's access at any time from your Buffer account settings.</p>

@@ -307,7 +307,7 @@ function openEditor(mode) {
   $('preview').hidden = true;
   if (mode === 'new') {
     $('editor-title').textContent = 'Confirm the details';
-    $('editor-help').textContent = 'Telly writes every post from these details, so they only need to be right once.';
+    $('editor-help').textContent = 'Check these details before you preview the posts. You can update the event later if plans change.';
     $('editor-submit').textContent = 'Preview campaign';
     $('channel-field').hidden = false;
     fillForm(null);
@@ -910,8 +910,8 @@ function renderWatch(watch) {
   if (watch.lastError === 'reconnect') status = 'Buffer stopped accepting Telly’s stored connection. Disconnect and connect again to restart watching.';
   else if (watch.enabled && watch.checkedAt) {
     const at = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(watch.checkedAt));
-    status = issues.length ? `Last checked ${at}.` : `Last checked ${at}. Nothing needs you.`;
-  } else if (watch.enabled) status = 'Turned on. The first check runs within the next half hour.';
+    status = issues.length ? `Last checked ${at}.` : `Last checked ${at}. No issues found.`;
+  } else if (watch.enabled) status = 'Background checks are on. The time of the first completed check will appear here.';
   $('watch-status').textContent = status;
 
   $('watch-form').hidden = watch.enabled;
