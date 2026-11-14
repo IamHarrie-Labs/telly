@@ -580,15 +580,32 @@
             </div>
             <h2 id="campaign-title" class="view-title"></h2>
             <p id="campaign-when" class="intro-text"></p>
+            <p id="campaign-shared" class="intro-text small-text" hidden></p>
           </div>
           <div class="card">
             <p id="campaign-checked" class="muted small-text" aria-live="polite"></p>
             <div id="campaign-posts" class="posts"></div>
             <div id="campaign-actions" class="row end">
               <button id="campaign-fix" type="button" hidden>Fix out-of-date posts</button>
-              <button id="cancel-event" type="button">Cancel event</button>
               <button id="change-detail" type="button" class="primary">Change a detail</button>
             </div>
+            <div class="status-actions" role="group" aria-labelledby="status-actions-label">
+              <span id="status-actions-label" class="status-label">Event status</span>
+              <div id="status-actions" class="row"></div>
+            </div>
+          </div>
+          <div id="campaign-buffer" class="card side-card" hidden>
+            <h3 class="card-title">Save to Buffer</h3>
+            <p class="muted small-text">Keep this event's details and wording in Buffer, to use in posts Telly doesn't schedule.</p>
+            <div class="row">
+              <button id="save-snippet" type="button" class="small">Save details as a snippet</button>
+              <button id="save-ideas" type="button" class="small">Save posts as ideas</button>
+            </div>
+            <p id="buffer-saved" class="muted small-text" aria-live="polite"></p>
+          </div>
+          <div id="campaign-history-card" class="card side-card">
+            <h3 class="card-title">History</h3>
+            <ol id="campaign-history" class="history"></ol>
           </div>
         </section>
 
@@ -597,7 +614,7 @@
             <button type="button" class="ghost back" data-back>Back to campaign</button>
             <span class="label label-light">Review</span>
             <h2 id="review-title" class="view-title">Review the corrections</h2>
-            <p class="intro-text">Nothing changes in Buffer until you press Apply.</p>
+            <p id="review-intro" class="intro-text">Nothing changes in Buffer until you press Apply.</p>
           </div>
           <div class="card">
             <ul id="review-changes" class="changes"></ul>

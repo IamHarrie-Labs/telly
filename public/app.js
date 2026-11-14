@@ -37,7 +37,27 @@ const state = {
   back: null, // what the Back button does in the current view
   flyer: false, // whether the server can read flyers
   demo: false, // a demo visitor: posts go to a practice queue, not Buffer
+  ideas: false, // whether Telly may save to Buffer's Ideas and Snippets
+  orgs: [], // the Buffer organizations this person belongs to
+  undo: null, // the history entry being undone, while reviewing an undo
 };
+
+// ---- Event status ------------------------------------------------------------------
+
+const STATUS = {
+  upcoming: { label: 'Going ahead', tone: 'ok' },
+  soldOut: { label: 'Sold out', tone: 'info' },
+  postponed: { label: 'Postponed', tone: 'warn' },
+  cancelled: { label: 'Cancelled', tone: 'bad' },
+};
+const isOff = (status) => status === 'cancelled' || status === 'postponed';
+const liveCount = (campaign) => campaign.posts.filter((p) => !p.held).length;
+function statusLine(campaign) {
+  const { status } = campaign.facts;
+  const scheduled = `${liveCount(campaign)} scheduled`;
+  if (status === 'soldOut') return `Sold out · ${scheduled}`;
+  return isOff(status) ? STATUS[status].label : scheduled;
+}
 
 // ---- Small helpers -------------------------------------------------------------
 
@@ -252,7 +272,8 @@ const pill = (label, tone) => el('span', { class: `pill ${tone}` }, label);
 // ---- Campaign list ---------------------------------------------------------------
 
 async function loadCampaigns() {
-  state.campaigns = (await api('/api/campaigns')).campaigns;
+  const org = state.orgId ? `?organizationId=${encodeURIComponent(state.orgId)}` : '';
+  state.campaigns = (await api(`/api/campaigns${org}`)).campaigns;
   renderCampaigns();
 }
 
@@ -269,15 +290,15 @@ function renderCampaigns() {
   }
   const checks = [];
   for (const campaign of state.campaigns) {
-    const status = campaign.facts.status === 'cancelled' ? 'Cancelled' : `${campaign.posts.length} scheduled`;
+    const by = campaign.mine === false && campaign.createdBy ? ` · added by ${campaign.createdBy}` : '';
     const drift = el('span', { class: 'drift' });
     list.append(el('li', {},
       el('button', { type: 'button', onclick: () => openCampaign(campaign) },
         el('span', { class: 'list-main' },
           el('span', {}, campaign.facts.title),
-          el('span', { class: 'muted' }, `${eventWhen(campaign.facts)} · ${status}`)),
+          el('span', { class: 'muted' }, `${eventWhen(campaign.facts)} · ${statusLine(campaign)}${by}`)),
         drift)));
-    if (campaign.facts.status !== 'cancelled' && campaign.posts.length) checks.push([campaign, drift]);
+    if (!isOff(campaign.facts.status) && liveCount(campaign)) checks.push([campaign, drift]);
   }
   checkDrift(checks);
 }
@@ -328,7 +349,7 @@ function fillForm(facts) {
 function readForm() {
   const form = $('facts-form');
   const facts = Object.fromEntries(FORM_FIELDS.map((name) => [name, form.elements[name].value.trim()]));
-  if (state.editor.mode === 'change') facts.status = state.campaign.facts.status;
+  if (state.editor.mode === 'change') facts.status = state.editor.status || state.campaign.facts.status;
   return facts;
 }
 
@@ -347,8 +368,8 @@ function renderChannelOptions() {
   }
 }
 
-function openEditor(mode) {
-  state.editor = { mode };
+function openEditor(mode, { status, title, help } = {}) {
+  state.editor = { mode, status };
   showError('');
   showNotice('');
   $('preview').hidden = true;
@@ -363,8 +384,8 @@ function openEditor(mode) {
     $('flyer-status').textContent = '';
     show('view-editor', () => show('view-campaigns'));
   } else {
-    $('editor-title').textContent = 'Change a detail';
-    $('editor-help').textContent = 'Edit what changed. Telly shows every affected post before anything in Buffer changes.';
+    $('editor-title').textContent = title || 'Change a detail';
+    $('editor-help').textContent = help || 'Edit what changed. Telly shows every affected post before anything in Buffer changes.';
     $('editor-submit').textContent = 'Review changes';
     $('channel-field').hidden = true;
     $('flyer-drop').hidden = true;
@@ -560,15 +581,23 @@ $('schedule').addEventListener('click', () => {
 function openCampaign(campaign) {
   state.campaign = campaign;
   const { facts } = campaign;
-  const cancelled = facts.status === 'cancelled';
+  const off = isOff(facts.status);
   $('campaign-title').textContent = facts.title;
   const status = $('campaign-status');
-  status.className = `pill ${cancelled ? 'bad' : 'ok'}`;
-  status.textContent = cancelled ? 'Cancelled' : `${campaign.posts.length} scheduled`;
+  status.className = `pill ${STATUS[facts.status]?.tone || 'ok'}`;
+  status.textContent = statusLine(campaign);
   $('campaign-when').textContent = `${eventWhen(facts)} · ${[facts.venue, facts.address].filter(Boolean).join(', ')}`;
+  const org = state.orgs.find((o) => o.id === campaign.organizationId);
+  $('campaign-shared').hidden = !org || state.demo;
+  $('campaign-shared').textContent = org
+    ? `Shared with everyone in ${org.name}.${campaign.mine === false && campaign.createdBy ? ` Added by ${campaign.createdBy}.` : ''}`
+    : '';
 
   renderCampaignPosts(campaign, null);
-  $('campaign-actions').hidden = cancelled;
+  $('campaign-actions').hidden = off;
+  renderStatusActions(campaign);
+  renderHistory(campaign);
+  renderBufferPanel(campaign);
   $('campaign-fix').hidden = true;
   $('campaign-checked').textContent = '';
   show('view-campaign', () => show('view-campaigns'));
@@ -586,7 +615,7 @@ function refreshCampaign(campaign) {
       if (state.campaign !== campaign) return;
       renderCampaignPosts(campaign, new Map(posts.map((p) => [p.postId, p])));
       const stale = posts.filter((p) => p.type === 'update' || p.type === 'conflict').length;
-      $('campaign-fix').hidden = stale === 0 || campaign.facts.status === 'cancelled';
+      $('campaign-fix').hidden = stale === 0 || isOff(campaign.facts.status);
       $('campaign-fix').textContent = stale === 1 ? 'Fix 1 out-of-date post' : `Fix ${stale} out-of-date posts`;
       const at = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(checkedAt));
       $('campaign-checked').textContent = `Checked with ${state.demo ? 'the practice queue' : 'Buffer'} at ${at}.`;
@@ -613,6 +642,9 @@ const LIVE = {
   published: ['Published', 'neutral', null],
   missing: ['Not in Buffer', 'neutral', 'This post was removed in Buffer.'],
   review: ['Time passed', 'neutral', null],
+  held: ['On hold', 'neutral', 'Telly took this out of Buffer. It goes back in if the event goes ahead.'],
+  resume: ['On hold', 'neutral', 'Telly took this out of Buffer. It goes back in if the event goes ahead.'],
+  expired: ['On hold', 'neutral', "Telly took this out of Buffer, and its time has passed, so it won't come back."],
 };
 
 function postImage(image) {
@@ -625,8 +657,8 @@ function renderCampaignPosts(campaign, live) {
   list.replaceChildren();
   const posts = [...campaign.posts].sort((a, b) => new Date(a.lastWrittenDueAt) - new Date(b.lastWrittenDueAt));
   for (const post of posts) {
-    const now = live?.get(post.postId);
-    const [label, tone, note] = now ? LIVE[now.type] || [] : [];
+    const now = post.held ? null : live?.get(post.postId);
+    const [label, tone, note] = post.held ? LIVE.held : now ? LIVE[now.type] || [] : [];
     list.append(postCard({
       meta: `${KIND[post.kind]} · ${formatWhen(now?.dueAt || post.lastWrittenDueAt, facts.timeZone)} · ${channelName(post.channelId)}`,
       pill: label ? pill(label, tone) : null,
@@ -635,8 +667,104 @@ function renderCampaignPosts(campaign, live) {
       extra: [postImage(now ? now.image : post.card), state.demo && now && now.status === 'scheduled' ? practiceRow(campaign, post, now.text) : null],
     }));
   }
-  if (!posts.length) list.append(el('p', { class: 'muted' }, facts.status === 'cancelled' ? "This event was called off, so Telly took its posts out of Buffer." : 'No scheduled posts.'));
+  if (!posts.length) list.append(el('p', { class: 'muted' }, isOff(facts.status) ? 'Telly took this event\'s posts out of Buffer.' : 'No scheduled posts.'));
 }
+
+// The status buttons depend on where the event stands now.
+function renderStatusActions(campaign) {
+  const { status } = campaign.facts;
+  const go = (label, next, primary = false) => {
+    const button = el('button', { type: 'button', class: primary ? 'primary' : '' }, label);
+    button.addEventListener('click', () => busy(button, () => reviewChange({ ...state.campaign.facts, status: next })));
+    return button;
+  };
+  const newDate = el('button', { type: 'button', class: 'primary' }, 'Set the new date');
+  newDate.addEventListener('click', () => openEditor('change', {
+    status: 'upcoming',
+    title: 'Set the new date',
+    help: 'Enter the new date and time. Telly brings the posts it put on hold back into Buffer with the new details, and shows you each one first.',
+  }));
+  const buttons = {
+    upcoming: [go('Mark sold out', 'soldOut'), go('Postpone', 'postponed'), go('Cancel event', 'cancelled')],
+    soldOut: [go('Tickets available again', 'upcoming'), go('Postpone', 'postponed'), go('Cancel event', 'cancelled')],
+    postponed: [newDate, go('Cancel event', 'cancelled')],
+    cancelled: [go("It's back on", 'upcoming', true)],
+  }[status] || [];
+  $('status-actions').replaceChildren(...buttons);
+}
+
+// ---- History and undo --------------------------------------------------------------
+
+const ACTION_LABELS = {
+  updated: 'updated', kept: 'kept your wording', held: 'put on hold', removed: 'removed', restored: 'back in the queue',
+  followUp: 'correction posted', dropped: 'no longer in Buffer',
+};
+
+function describeEntry(entry) {
+  if (entry.type === 'created') return `Campaign created: ${entry.summary}`;
+  const fields = (entry.changedFields || []).map((key) => (key === 'status'
+    ? `${STATUS[entry.before.status]?.label || 'Going ahead'} → ${STATUS[entry.after.status]?.label || 'Going ahead'}`
+    : `${FIELD[key]}: ${describeValue(key, entry.before[key])} → ${describeValue(key, entry.after[key])}`));
+  const lead = entry.type === 'undo' ? 'Undid a change' : fields.length ? fields.join('; ') : 'Posts brought back in line';
+  return entry.type === 'undo' && fields.length ? `${lead}: ${fields.join('; ')}` : lead;
+}
+
+function renderHistory(campaign) {
+  const list = $('campaign-history');
+  const entries = [...(campaign.history || [])].reverse();
+  $('campaign-history-card').hidden = !entries.length;
+  list.replaceChildren(...entries.map((entry) => {
+    const counts = {};
+    for (const p of entry.posts || []) counts[p.action] = (counts[p.action] || 0) + 1;
+    const did = Object.entries(counts).filter(([a]) => ACTION_LABELS[a] && a !== 'followedUp')
+      .map(([a, n]) => `${n} ${ACTION_LABELS[a]}`).join(' · ');
+    const at = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(entry.at));
+    const meta = [at, entry.by, did].filter(Boolean).join(' · ');
+    const row = el('li', { class: entry.undoneBy ? 'undone' : '' },
+      el('span', { class: 'history-what' }, describeEntry(entry)),
+      el('span', { class: 'muted small-text' }, entry.undoneBy ? `${meta} · undone` : meta));
+    if (campaign.undo === entry.id) {
+      const undo = el('button', { type: 'button', class: 'small' }, 'Undo');
+      undo.addEventListener('click', () => busy(undo, () => reviewUndo(entry.id)));
+      row.append(undo);
+    }
+    return row;
+  }));
+}
+
+async function reviewUndo(entryId) {
+  const plan = await api(`/api/campaigns/${state.campaign.id}/history/${encodeURIComponent(entryId)}/undo/preview`, { method: 'POST' });
+  startReview(plan, plan.facts, { undo: plan.undo });
+}
+
+// ---- Buffer Ideas and Snippets -----------------------------------------------------
+
+function renderBufferPanel(campaign) {
+  $('campaign-buffer').hidden = !state.ideas;
+  if (!state.ideas) return;
+  const where = state.demo ? 'the practice workspace' : 'Buffer';
+  const notes = [];
+  if (campaign.snippet?.id) notes.push(`Details saved as a snippet in ${where}. Telly updates it when the details change.`);
+  if (campaign.ideas?.length) notes.push(`${campaign.ideas.length} idea${campaign.ideas.length === 1 ? '' : 's'} saved to ${where}.`);
+  $('buffer-saved').textContent = notes.join(' ');
+  $('save-snippet').textContent = campaign.snippet?.id ? 'Update the snippet' : 'Save details as a snippet';
+}
+
+const bufferOrg = () => state.campaign.organizationId || state.orgId;
+
+$('save-snippet').addEventListener('click', () => busy($('save-snippet'), async () => {
+  const { snippet } = await api(`/api/campaigns/${state.campaign.id}/snippet`, { method: 'POST', body: JSON.stringify({ organizationId: bufferOrg() }) });
+  state.campaign.snippet = snippet;
+  renderBufferPanel(state.campaign);
+  showNotice(`Saved to ${state.demo ? 'the practice workspace' : 'Buffer'} as a snippet: "${snippet.text}"`);
+}));
+
+$('save-ideas').addEventListener('click', () => busy($('save-ideas'), async () => {
+  const { saved, ideas } = await api(`/api/campaigns/${state.campaign.id}/ideas`, { method: 'POST', body: JSON.stringify({ organizationId: bufferOrg() }) });
+  state.campaign.ideas = ideas;
+  renderBufferPanel(state.campaign);
+  showNotice(`Saved ${saved} idea${saved === 1 ? '' : 's'} to ${state.demo ? 'the practice workspace' : 'Buffer'}.`);
+}));
 
 // Demo only: act on a post the way an organiser might directly in Buffer, then see Telly
 // catch it. These change the practice queue, never Telly's own record of the campaign.
@@ -672,14 +800,20 @@ function practiceRow(campaign, post, liveText) {
 }
 
 $('change-detail').addEventListener('click', () => openEditor('change'));
-$('cancel-event').addEventListener('click', () => {
-  busy($('cancel-event'), () => reviewChange({ ...state.campaign.facts, status: 'cancelled' }));
-});
 
 // ---- Review the corrections -------------------------------------------------------
 
 async function reviewChange(facts) {
   const plan = await api(`/api/campaigns/${state.campaign.id}/changes/preview`, { method: 'POST', body: JSON.stringify({ facts }) });
+  startReview(plan, facts);
+}
+
+function startReview(plan, facts, { undo = null } = {}) {
+  state.undo = undo;
+  $('review-title').textContent = undo ? 'Undo this change' : 'Review the corrections';
+  $('review-intro').textContent = undo
+    ? 'Telly puts back the earlier details and wording. Posts you edited in Buffer since are shown for you to check. Nothing changes until you press Apply.'
+    : 'Nothing changes in Buffer until you press Apply.';
   state.pendingFacts = { facts };
   state.overwrite = new Set();
   state.version = plan.version;
@@ -705,7 +839,7 @@ function diffText(before, after) {
 function describeValue(key, value) {
   if (!value) return 'none';
   if (key === 'startsLocal') return eventWhen({ startsLocal: value, timeZone: state.campaign.facts.timeZone }).replace(/ \(.*\)$/, '');
-  if (key === 'status') return value === 'cancelled' ? 'Cancelled' : 'Going ahead';
+  if (key === 'status') return STATUS[value]?.label || 'Going ahead';
   return value;
 }
 
@@ -746,7 +880,20 @@ function reviewCard(item) {
       });
     }
     case 'delete':
-      return postCard({ meta, pill: pill('Will remove', 'bad'), text: item.current, note: item.reason, listen: false });
+      return postCard({ meta, pill: item.hold ? pill('Will put on hold', 'warn') : pill('Will remove', 'bad'), text: item.current, note: item.reason, listen: false });
+    case 'resume':
+      return postCard({
+        meta,
+        pill: pill('Back in the queue', 'info'),
+        text: item.proposed,
+        note: `${item.reason} It goes out ${formatWhen(item.dueAt, state.pendingFacts.facts.timeZone)}.`,
+        listen: false,
+        extra: [postImage(item.card), el('div', { class: 'row', style: 'margin-top:8px' }, listenButton(() => item.proposed))],
+      });
+    case 'held':
+      return postCard({ meta, pill: pill('On hold', 'neutral'), text: 'Telly took this post out of Buffer. It stays on hold.', listen: false });
+    case 'expired':
+      return postCard({ meta, pill: pill('Stays on hold', 'neutral'), text: '', note: item.note, listen: false });
     case 'conflict': {
       const keep = el('button', { type: 'button', class: 'small', 'aria-pressed': 'true' }, 'Keep mine');
       const use = el('button', { type: 'button', class: 'small', 'aria-pressed': 'false' }, 'Use correction');
@@ -779,13 +926,25 @@ function reviewCard(item) {
       };
       post.addEventListener('click', () => choose(true));
       skip.addEventListener('click', () => choose(false));
+      const choice = el('div', { class: 'choice' }, post, skip);
+      if (state.ideas) {
+        // Posting it yourself, perhaps somewhere else: keep the wording in Buffer's Ideas.
+        const keep = el('button', { type: 'button', class: 'small ghost' }, 'Save it to Buffer Ideas');
+        keep.addEventListener('click', () => busy(keep, async () => {
+          await api(`/api/campaigns/${state.campaign.id}/ideas`, { method: 'POST', body: JSON.stringify({ text: item.suggested, kind: 'followUp', organizationId: bufferOrg() }) });
+          keep.textContent = 'Saved to Ideas';
+          keep.disabled = true;
+          keep.dataset.done = '1';
+        }));
+        choice.append(keep);
+      }
       return postCard({
         meta,
         pill: pill('Already published', 'warn'),
         text: item.current,
         note: `${item.note} Telly can post this correction on the same channel as soon as Buffer allows: "${item.suggested.replace(/\n/g, ' · ')}"`,
         listen: false,
-        extra: el('div', { class: 'choice' }, post, skip),
+        extra: choice,
       });
     }
     case 'review':
@@ -806,7 +965,9 @@ function updateApply(plan = lastPlan) {
   const has = (type) => plan.items.filter((i) => i.type === type);
   const changing = has('update').length + has('conflict').filter((i) => state.overwrite.has(i.postId)).length;
   const keeping = has('conflict').filter((i) => !state.overwrite.has(i.postId)).length;
-  const removing = has('delete').length;
+  const removing = has('delete').filter((i) => !i.hold).length;
+  const holding = has('delete').filter((i) => i.hold).length;
+  const restoring = has('resume').length;
   const following = new Set(has('published').filter((i) => state.followUps.has(i.postId)).map((i) => i.channelId)).size;
   const dropping = has('missing').length;
   const waiting = has('review').length + has('published').filter((i) => i.needsFollowUp && !state.followUps.has(i.postId)).length;
@@ -815,12 +976,14 @@ function updateApply(plan = lastPlan) {
     changing && `change ${posts(changing)}`,
     keeping && `keep ${keeping === 1 ? 'your wording on 1 post' : `your wording on ${keeping} posts`}`,
     removing && `remove ${posts(removing)}`,
+    holding && `take ${posts(holding)} out of ${where} and keep ${holding === 1 ? 'it' : 'them'} on hold`,
+    restoring && `put ${posts(restoring)} back in the queue`,
     following && `post ${following === 1 ? 'a correction' : `${following} corrections`}`,
     dropping && `stop tracking ${posts(dropping)} deleted in Buffer`,
   ].filter(Boolean);
   const button = $('apply');
   button.hidden = parts.length === 0;
-  button.textContent = removing && !changing ? `Remove ${posts(removing)}` : 'Apply';
+  button.textContent = state.undo ? 'Undo' : removing && !changing && !holding && !restoring ? `Remove ${posts(removing)}` : 'Apply';
   $('review-summary').textContent = parts.length === 0
     ? `Nothing to send to ${where}.`
     : `Telly will ${parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]}${waiting ? `, and leave ${posts(waiting)} for you` : ''}.`;
@@ -830,13 +993,19 @@ $('apply').addEventListener('click', () => {
   busy($('apply'), async () => {
     const result = await api(`/api/campaigns/${state.campaign.id}/changes/apply`, {
       method: 'POST',
-      body: JSON.stringify({ facts: state.pendingFacts.facts, approve: 'all', overwrite: [...state.overwrite], followUps: [...state.followUps], version: state.version }),
+      body: JSON.stringify({
+        facts: state.pendingFacts.facts, approve: 'all', overwrite: [...state.overwrite], followUps: [...state.followUps],
+        version: state.version, undo: state.undo || undefined,
+      }),
     });
+    const undid = Boolean(state.undo);
+    state.undo = null;
     await loadCampaigns();
     openCampaign(result.campaign);
     const failed = result.results.filter((r) => r.status === 'failed');
-    if (failed.length) showError(`${result.summary}. ${failed.map((f) => `${KIND[f.kind]}: ${f.note}`).join(' ')}`);
-    else showNotice(`Checked in ${state.demo ? 'the practice queue' : 'Buffer'}: ${result.summary}.`);
+    const snippet = result.snippet === 'updated' ? ' Your Buffer snippet has the new details.' : result.snippet === 'failed' ? " Telly couldn't update your Buffer snippet." : '';
+    if (failed.length) showError(`${result.summary}. ${failed.map((f) => `${KIND[f.kind]}: ${f.note}`).join(' ')}${snippet}`);
+    else showNotice(`${undid ? 'Undone. ' : ''}Checked in ${state.demo ? 'the practice queue' : 'Buffer'}: ${result.summary}.${snippet}`);
   });
 });
 
@@ -884,6 +1053,8 @@ async function init() {
   $('account-bar').hidden = false;
   $('lab').hidden = !session.lab;
   state.flyer = Boolean(session.flyer);
+  state.ideas = Boolean(session.ideas);
+  state.orgs = session.account.organizations || [];
   state.demo = Boolean(session.demo);
   $('demo-badge').hidden = !state.demo;
   $('demo-connect').hidden = !state.demo;
@@ -897,7 +1068,7 @@ async function init() {
   state.orgId = select.value;
   select.addEventListener('change', async () => {
     state.orgId = select.value;
-    await loadChannels().catch((e) => showError(e.message));
+    await Promise.all([loadChannels(), loadCampaigns()]).catch((e) => showError(e.message));
     show('view-campaigns');
   });
 
@@ -944,10 +1115,11 @@ function renderWatch(watch) {
   if (!watch.available) return;
   const where = watch.emails ? (watch.enabled && watch.email ? `emails ${watch.email}` : 'emails you') : 'shows it here';
   $('watch-pill').replaceChildren(watch.enabled ? pill('On', 'ok') : pill('Off', 'neutral'));
-  const every = watch.everyHours === 1 ? 'every hour' : `every ${watch.everyHours || 6} hours`;
+  const every = watch.everyHours === 1 ? 'every hour' : `every ${watch.everyHours || 3} hours`;
+  const when = `ten minutes after each post is due, and ${every} in between`;
   $('watch-explain').textContent = watch.enabled
-    ? `Telly checks your upcoming posts in Buffer ${every}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. It keeps going after you disconnect. Turn it off here to stop.`
-    : `Telly can check your upcoming posts in Buffer ${every}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. To do that, it keeps your Buffer connection in its database, encrypted. Turning watching off deletes it.`;
+    ? `Telly checks your upcoming posts in Buffer ${when}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. It keeps going after you disconnect. Turn it off here to stop.`
+    : `Telly can check your upcoming posts in Buffer ${when}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. To do that, it keeps your Buffer connection in its database, encrypted. Turning watching off deletes it.`;
 
   const issues = watch.enabled ? watch.issues || [] : [];
   $('watch-issues').replaceChildren(...issues.map((issue) => el('li', {}, issue.text)));
@@ -958,6 +1130,10 @@ function renderWatch(watch) {
   else if (watch.enabled && watch.checkedAt) {
     const at = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(watch.checkedAt));
     status = issues.length ? `Last checked ${at}.` : `Last checked ${at}. No issues found.`;
+    if (watch.nextCheckAt) {
+      const next = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(watch.nextCheckAt));
+      status += ` Next check ${next}, just after your next post goes out.`;
+    }
   } else if (watch.enabled) status = 'Background checks are on. The time of the first completed check will appear here.';
   $('watch-status').textContent = status;
 

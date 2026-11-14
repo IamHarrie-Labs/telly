@@ -106,9 +106,58 @@ ok(d.text.includes('Saturday') || d.text.includes('Today'), 'day-of wording stil
 // Cancel.
 applied = await api(`/api/campaigns/${id}/changes/apply`, { facts: { ...moved, status: 'cancelled' }, approve: 'all' });
 const gone = await post(announcement.postId);
-ok(applied.body.summary === '3 removed' && gone === null, `cancelled: posts removed (${applied.body.summary})`);
-const final = await api(`/api/campaigns/${id}`);
-ok(final.body.campaign.posts.length === 0 && final.body.campaign.facts.status === 'cancelled', 'campaign record reflects the cancellation');
+ok(applied.body.summary === '3 on hold' && gone === null, `cancelled: posts out of Buffer and on hold (${applied.body.summary})`);
+let final = await api(`/api/campaigns/${id}`);
+ok(final.body.campaign.posts.every((p) => p.held) && final.body.campaign.facts.status === 'cancelled', 'campaign record reflects the cancellation');
+
+// Undo the cancellation: the same posts go back into Buffer with their wording.
+ok(Boolean(final.body.campaign.undo), 'the cancellation can be undone');
+const undoPlan = await api(`/api/campaigns/${id}/history/${final.body.campaign.undo}/undo/preview`, {});
+ok(undoPlan.status === 200 && undoPlan.body.items.every((i) => i.type === 'resume') && undoPlan.body.facts.status === 'upcoming', 'undo preview brings the 3 posts back');
+applied = await api(`/api/campaigns/${id}/changes/apply`, { approve: 'all', undo: final.body.campaign.undo, version: undoPlan.body.version });
+final = await api(`/api/campaigns/${id}`);
+const back = final.body.campaign.posts;
+const backPost = await post(back.find((p) => p.kind === 'announcement').postId);
+ok(applied.body.summary === '3 back in the queue' && back.every((p) => !p.held) && backPost?.status === 'scheduled', `undo put the posts back in Buffer (${applied.body.summary})`);
+ok(backPost.text === undoPlan.body.items.find((i) => i.kind === 'announcement').proposed, 'with the wording they had before');
+const history = final.body.campaign.history;
+ok(history.at(-1).type === 'undo' && history.at(-2).undoneBy === history.at(-1).id, 'history records the undo against the change it reversed');
+const again = await api(`/api/campaigns/${id}/history/${history.at(-2).id}/undo/preview`, {});
+ok(again.status === 409, 'a change can only be undone once');
+
+// Sold out: the scheduled posts say so.
+applied = await api(`/api/campaigns/${id}/changes/apply`, { facts: { ...moved, status: 'soldOut' }, approve: 'all' });
+const soldOut = await post(back.find((p) => p.kind === 'reminder').postId);
+ok(/sold out/.test(soldOut.text) && !soldOut.text.includes('example.org/book'), `sold out: posts rewritten (${applied.body.summary})`);
+
+// Buffer Snippets and Ideas.
+const snip = await api(`/api/campaigns/${id}/snippet`, {});
+ok(snip.status === 200 && snip.body.snippet.id && snip.body.snippet.text.startsWith('Sold out · Community Workshop'), 'event details saved as a Buffer snippet');
+applied = await api(`/api/campaigns/${id}/changes/apply`, { facts: { ...moved, status: 'soldOut', price: 'Free, donations welcome' }, approve: 'all' });
+const mockState = await (await fetch(`http://localhost:${process.env.MOCK_PORT || 4110}/_state`)).json().catch(() => null);
+ok(applied.body.snippet === 'updated' && mockState?.snippets?.[0]?.text.includes('donations welcome'), 'the snippet follows a change of details');
+const ideas = await api(`/api/campaigns/${id}/ideas`, {});
+ok(ideas.status === 200 && ideas.body.saved === 3, 'the posts are saved as 3 Buffer ideas');
+
+// Teams: someone else in the same Buffer organization sees and can work on the campaign.
+const MOCK = `http://localhost:${process.env.MOCK_PORT || 4010}`;
+const control = (body) => fetch(`${MOCK}/_control`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+await control({ nextLogin: 'acct_teammate' });
+jar.clear();
+await request(BASE + '/auth/login');
+const teamList = (await api('/api/campaigns?organizationId=org_mock')).body.campaigns || [];
+const shared = teamList.find((c) => c.id === id);
+ok(shared && shared.mine === false && shared.createdBy === 'Mock User', 'a teammate in the same Buffer organization sees the campaign, marked as added by its creator');
+const teamPreview = await api(`/api/campaigns/${id}/changes/preview`, { facts: { ...moved, status: 'soldOut', price: 'Free, donations welcome', venue: 'Town Hall' } });
+ok(teamPreview.status === 200 && teamPreview.body.items.some((i) => i.type === 'update'), 'and can review a change to it');
+ok((await api(`/api/campaigns/${id}/changes/apply`, { facts: moved, approve: 'all', version: 1 })).status === 409, 'an out-of-date review from a teammate is refused');
+
+await control({ nextLogin: 'acct_outsider' });
+jar.clear();
+await request(BASE + '/auth/login');
+const outsiderList = (await api('/api/campaigns?organizationId=org_mock')).body.campaigns || [];
+ok(!outsiderList.some((c) => c.id === id) && (await api(`/api/campaigns/${id}`)).status === 404, 'someone outside the organization sees nothing');
+await control({ nextLogin: 'acct_mock' });
 
 // Isolation: another login must not see this campaign.
 jar.clear();

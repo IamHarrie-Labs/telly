@@ -26,6 +26,7 @@ const env = {
   BUFFER_API_URL: `http://localhost:${MOCK_PORT}/`,
   BUFFER_AUTH_URL: `http://localhost:${MOCK_PORT}/auth`,
   BUFFER_TOKEN_URL: `http://localhost:${MOCK_PORT}/token`,
+  TELLY_IDEAS: '1', // the fake Buffer answers Ideas and Snippets
   // Empty values win over .env files, so the run uses the file store and no paid APIs.
   ANTHROPIC_API_KEY: '',
   DATABASE_URL: '',

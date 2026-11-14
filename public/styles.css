@@ -991,3 +991,26 @@ body[data-mode='app'] .header-bar { left: var(--edge); right: var(--edge); trans
 .feedback-form { display: flex; flex-direction: column; gap: 10px; }
 .feedback-form textarea { min-height: 160px; }
 .feedback-form .row { margin-top: 6px; }
+
+/* ---- Event status, history and Save to Buffer (campaign view) ---------------------- */
+.status-actions { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line, rgba(0, 0, 0, 0.08)); }
+.status-actions .row { margin-top: 10px; }
+.status-label { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted, #6b6a63); }
+.side-card { margin-top: 16px; }
+.card-title { margin: 0 0 6px; font-size: 1.05rem; font-weight: 600; }
+.side-card .row { margin-top: 12px; }
+#buffer-saved:empty { display: none; }
+#buffer-saved { margin: 12px 0 0; }
+.history { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 0; }
+.history li {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: center;
+  padding: 12px 0; border-top: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+}
+.history li:first-child { border-top: 0; padding-top: 4px; }
+.history-what { grid-column: 1; overflow-wrap: anywhere; }
+.history li > .muted { grid-column: 1; }
+.history li > button { grid-column: 2; grid-row: 1 / span 2; }
+.history li.undone .history-what { text-decoration: line-through; text-decoration-color: rgba(0, 0, 0, 0.3); }
+@media (max-width: 760px) {
+  .status-actions .row > button { flex: 1 1 auto; }
+}

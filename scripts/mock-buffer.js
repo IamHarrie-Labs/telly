@@ -12,12 +12,22 @@ const b64url = (buf) => Buffer.from(buf).toString('base64url');
 
 const codes = new Map(); // authorization code -> { challenge, redirectUri }
 const refreshTokens = new Set();
-const accessTokens = new Set();
+const accessTokens = new Map(); // access token -> account id
+const refreshOwners = new Map(); // refresh token -> account id
+// Test control: who the next sign-in belongs to. A teammate shares org_mock; an outsider doesn't.
+const ACCOUNTS = {
+  acct_mock: { id: 'acct_mock', email: 'mock@example.com', name: 'Mock User', organizations: [{ id: 'org_mock', name: 'Mock Organization' }] },
+  acct_teammate: { id: 'acct_teammate', email: 'team@example.com', name: 'Team Mate', organizations: [{ id: 'org_mock', name: 'Mock Organization' }] },
+  acct_outsider: { id: 'acct_outsider', email: 'out@example.com', name: 'Out Sider', organizations: [{ id: 'org_other', name: 'Other Organization' }] },
+};
+let nextLogin = 'acct_mock';
 
 const channels = [
   { id: 'ch_demo', name: 'telly-demo.bsky.social', displayName: 'Telly Demo', service: 'bluesky', avatar: null, isDisconnected: false, isQueuePaused: false },
 ];
 const posts = new Map();
+const ideas = [];
+const snippets = new Map();
 let seq = 1;
 
 function makePost({ text, channelId = 'ch_demo', dueAt, imageUrl, altText }) {
@@ -39,15 +49,16 @@ makePost({ text: 'Workshop at the Library, Sat 12 Dec, 2pm. Free entry.', dueAt:
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
 const readBody = (req) => new Promise((resolve) => { let d = ''; req.on('data', (c) => (d += c)); req.on('end', () => resolve(d)); });
 
-function issueTokens() {
+function issueTokens(owner = nextLogin) {
   const accessToken = `mock_at_${crypto.randomBytes(12).toString('hex')}`;
   const refreshToken = `mock_rt_${crypto.randomBytes(12).toString('hex')}`;
-  accessTokens.add(accessToken);
+  accessTokens.set(accessToken, owner);
   refreshTokens.add(refreshToken);
+  refreshOwners.set(refreshToken, owner);
   return { access_token: accessToken, refresh_token: refreshToken, token_type: 'Bearer', expires_in: Number(process.env.MOCK_TOKEN_TTL) || 3600 };
 }
 
-function handleGraphql(query, variables) {
+function handleGraphql(query, variables, who = 'acct_mock') {
   if (/editPost\s*\(/.test(query)) {
     const input = variables.input;
     const post = posts.get(input.id);
@@ -66,6 +77,27 @@ function handleGraphql(query, variables) {
     const post = makePost({ text: i.text, channelId: i.channelId, dueAt: i.dueAt, imageUrl: i.assets?.[0]?.image?.url, altText: i.assets?.[0]?.image?.metadata?.altText });
     return { createPost: { post } };
   }
+  if (/createIdea\s*\(/.test(query)) {
+    const idea = { id: `idea_${seq++}`, content: variables.input.content };
+    ideas.push(idea);
+    return { createIdea: { __typename: 'Idea', id: idea.id } };
+  }
+  if (/createSnippet\s*\(/.test(query)) {
+    const snippet = { id: `snippet_${seq++}`, name: variables.input.name, text: variables.input.text };
+    snippets.set(snippet.id, snippet);
+    return { createSnippet: { __typename: 'CreateSnippetSuccess', snippet } };
+  }
+  if (/updateSnippet\s*\(/.test(query)) {
+    const snippet = snippets.get(variables.input.id);
+    if (!snippet) return { updateSnippet: { __typename: 'VoidMutationError', message: 'Snippet not found' } };
+    Object.assign(snippet, { name: variables.input.name, text: variables.input.text });
+    return { updateSnippet: { __typename: 'UpdateSnippetSuccess', snippet } };
+  }
+  if (/query PostsBatch/.test(query)) {
+    const data = {};
+    for (const [key, id] of Object.entries(variables)) data[`p${key.slice(2)}`] = posts.get(id) ?? null;
+    return data;
+  }
   if (/deletePost\s*\(/.test(query)) {
     posts.delete(variables.input.id);
     return { deletePost: { __typename: 'DeletePostSuccess' } };
@@ -74,7 +106,7 @@ function handleGraphql(query, variables) {
   if (/\bposts\s*\(/.test(query)) return { posts: { edges: [...posts.values()].map((node) => ({ node })) } };
   if (/\bchannels\s*\(/.test(query)) return { channels };
   if (/\baccount\s*\{/.test(query)) {
-    return { account: { id: 'acct_mock', email: 'mock@example.com', name: 'Mock User', organizations: [{ id: 'org_mock', name: 'Mock Organization' }] } };
+    return { account: ACCOUNTS[who] };
   }
   throw new Error('The fake Buffer does not implement this operation');
 }
@@ -108,18 +140,21 @@ const server = http.createServer(async (req, res) => {
     if (p.get('grant_type') === 'refresh_token') {
       const rt = p.get('refresh_token');
       if (!refreshTokens.delete(rt)) return json(res, 400, { error: 'invalid_grant', error_description: 'Refresh token already used or unknown' });
-      return json(res, 200, issueTokens()); // single use: the old one is gone
+      return json(res, 200, issueTokens(refreshOwners.get(rt))); // single use: the old one is gone
     }
     return json(res, 400, { error: 'unsupported_grant_type' });
   }
 
   // Test controls: make a post fail, pause or disconnect a channel, or expire access tokens,
   // so the end-to-end checks can see how Telly reacts. The real Buffer has nothing like this.
+  if (req.method === 'GET' && url.pathname === '/_state') return json(res, 200, { ideas, snippets: [...snippets.values()] });
+
   if (req.method === 'POST' && url.pathname === '/_control') {
     const c = JSON.parse((await readBody(req)) || '{}');
     if (c.postId && posts.has(c.postId)) Object.assign(posts.get(c.postId), c.set || {});
     if (c.channelId) Object.assign(channels.find((ch) => ch.id === c.channelId) || {}, c.set || {});
     if (c.expireAccessTokens) accessTokens.clear();
+    if (c.nextLogin && ACCOUNTS[c.nextLogin]) nextLogin = c.nextLogin;
     return json(res, 200, { ok: true });
   }
 
@@ -128,7 +163,7 @@ const server = http.createServer(async (req, res) => {
     if (!accessTokens.has(token)) return json(res, 401, { errors: [{ message: 'Unauthorized' }] });
     try {
       const { query, variables = {} } = JSON.parse(await readBody(req));
-      return json(res, 200, { data: handleGraphql(query, variables) });
+      return json(res, 200, { data: handleGraphql(query, variables, accessTokens.get(token)) });
     } catch (error) {
       return json(res, 200, { errors: [{ message: error.message }] });
     }

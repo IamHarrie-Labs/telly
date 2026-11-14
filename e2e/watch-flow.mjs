@@ -58,6 +58,8 @@ let run = await cron();
 ok(run.status === 200 && run.body.checked === 1 && run.body.failed === 0, `scheduler checked the account (${JSON.stringify(run.body)})`);
 watch = await call('GET', '/api/watch');
 ok(watch.body.issues.length === 0 && watch.body.checkedAt, 'nothing needs attention yet');
+const nextCheck = Date.parse(watch.body.nextCheckAt);
+ok(nextCheck > Date.now(), `the next check is set for just after the next post is due (${watch.body.nextCheckAt})`);
 
 // ---- Something goes wrong in Buffer -------------------------------------------------------
 await control({ postId: first.postId, set: { status: 'error' } });
