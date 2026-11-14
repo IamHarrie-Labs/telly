@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Telly: Project Overview</title></head>
+<body>
+<h1>Telly</h1>
+<p><b>Tell it once. Keep it current.</b></p>
+<p>My entry for Buffer Commit 2026, built on the Buffer API.</p>
+
+<h2>Demo</h2>
+<ul>
+  <li>Demo video: [paste the video link here]</li>
+  <li>Live app: <a href="https://usetelly.xyz">https://usetelly.xyz</a></li>
+  <li>No Buffer account? <a href="https://usetelly.xyz/demo">https://usetelly.xyz/demo</a> opens the full app on a practice queue. You can edit, publish or remove posts there as if you were in Buffer and see how Telly reacts.</li>
+  <li>Privacy page: <a href="https://usetelly.xyz/privacy.html">https://usetelly.xyz/privacy.html</a></li>
+</ul>
+<p>The video (under 2 minutes) goes like this:</p>
+<ol>
+  <li>The problem, in one line: "The venue changed. Three posts are already scheduled."</li>
+  <li>Connect Buffer, enter the event details, preview the three posts and press Listen on one.</li>
+  <li>Schedule them, then show the posts sitting in the Buffer queue.</li>
+  <li>Edit the reminder by hand in Buffer, the way an organiser might.</li>
+  <li>Change the venue in Telly. The review shows two posts marked "Will update" and one marked "You edited this". Choose Keep mine and apply. The result line appears, and Buffer shows the new venue.</li>
+  <li>Cancel the event. The posts that hadn't gone out disappear from Buffer.</li>
+  <li>Close on the tagline.</li>
+</ol>
+
+<h2>The problem</h2>
+<p>If you've promoted an event, you know this one. The venue moves, or the start time slips, and three posts are already scheduled with the old details. You dig through the queue, fix one, forget another, and someone turns up at the wrong place.</p>
+<p>A scheduler has no idea that your announcement, reminder and day-of post are about the same evening. So when the evening changes, you have to find and fix each post yourself.</p>
+
+<h2>What Telly does</h2>
+<p>Telly keeps all of an event's posts tied to one set of details: title, date and time, timezone, venue, address, price and booking link. You can type these in or upload the flyer and let Claude read it. Either way, the fields Telly filled in are highlighted until you've checked them.</p>
+<p>From those details Telly writes an announcement, a reminder two days before and a post for the day itself, and schedules them in Buffer on the event's local time. Each post has a Listen button that reads it aloud with the browser's voice, which is a quick way to catch a clumsy sentence.</p>
+<p>When something changes, you edit the event. Telly fetches each scheduled post from Buffer and shows the old line crossed out above the new one. If the date moved, the posting times move with it.</p>
+<p>If you rewrote one of the posts in Buffer, Telly notices and asks whether to keep your version or use the correction. It won't overwrite your words without asking. A post that has already gone out gets flagged with suggested wording for a follow-up, and a post someone deleted in Buffer shows up as missing.</p>
+<p>The campaign list also checks each live campaign whenever you open it. If a post was edited or removed in Buffer since Telly last touched it, a badge says so.</p>
+<p>If the event is called off, one button deletes the posts that haven't gone out yet.</p>
+<p>After every change, Telly fetches the posts from Buffer again before reporting back. So when it says "2 updated · 1 needs review", that's what Buffer holds.</p>
+
+<h2>How it works</h2>
+<ol>
+  <li>Sign in with Buffer and approve Telly's four permissions on Buffer's own screen. Telly never sees your password.</li>
+  <li>Type the event details or upload the flyer. It takes about a minute.</li>
+  <li>Preview the three posts, listen to them if you like, pick the channels and schedule.</li>
+  <li>When plans change, edit the event and go through the corrections. Decide what to do about any post you edited yourself.</li>
+  <li>Telly makes the edits you approved, checks them in Buffer and tells you the result.</li>
+</ol>
+
+<h2>Built on the Buffer API</h2>
+<p>Sign-in uses OAuth 2.0 with PKCE and rotating refresh tokens. Telly calls <code>account</code> and <code>channels</code> so you can pick an organization and channels, <code>createPost</code> with a custom schedule for the three posts, and <code>post</code> to fetch each one back. That read is how it spots hand edits, published posts and deleted posts, and how it confirms its own changes. <code>editPost</code> corrects the text, and changes the time only if the time really changed. <code>deletePost</code> handles cancellations.</p>
+<p>I tested the main flows on a real Buffer account with a connected Bluesky channel: create (3 scheduled), change the venue (3 updated, times unchanged) and cancel (3 removed, queue empty). I checked each result in Buffer's own queue.</p>
+
+<h2>Design</h2>
+<p>The site uses one palette throughout: stone, sage and off-white, with serif headlines, Poppins for body text and small outlined labels. The landing page opens on an event flyer that gets a "Now at Town Hall" note stuck on it while a phone beside it shows the posts being fixed. As you scroll, frosted glass spreads across the scene and the story of the problem fills in word by word. Further down there are expanding cards and a "How it works" section where the picture changes with the step you're reading.</p>
+<p>Inside the app, each screen has the same stone band behind its title, with white cards over its lower edge. Corrections are highlighted, messages can be dismissed with a click, and the layout works on phones.</p>
+<p>Menus and cards work from the keyboard, animated text has a screen-reader copy, and reduced-motion settings are respected.</p>
+
+<h2>Privacy and security</h2>
+<p>Buffer sign-in tokens live in an encrypted cookie in your browser and never go into a database. The database holds campaign records: the event details, your Buffer account ID, the IDs of the posts Telly created, and the text and times it last wrote. Telly needs those last two to notice hand edits.</p>
+<p>There are no analytics, ads or tracking cookies, and data isn't sold or shared. You can delete everything Telly saved from inside the app and revoke its access from Buffer. Flyer images go to Anthropic once and aren't stored. Demo data is deleted after seven days. Post text is always inserted as plain text, and every page sends standard security headers.</p>
+
+<h2>Technology</h2>
+<p>Node.js and Express on Vercel, with encrypted cookie sessions and Neon Postgres for campaigns. The front end is plain HTML, CSS and JavaScript with no framework; the fonts are served by the app itself. Claude (Anthropic API) reads uploaded flyers.</p>
+<p>Testing: 27 unit tests, 19 end-to-end checks against a local fake of the Buffer API (hand edits, rescheduling, cancellation, access control) and 16 more for the demo, including checks that one demo visitor can't see another's campaigns.</p>
+
+<h2>Who it's for</h2>
+<p>Community organisers, venues, libraries, small businesses, anyone who promotes events on social media and has had plans change after the posts went into the queue.</p>
+
+<h2>What's next</h2>
+<ul>
+  <li>More post templates, including a thank-you after the event.</li>
+  <li>An event card image with alt text on each post.</li>
+  <li>Recurring events and multi-day programmes.</li>
+</ul>
+
+<h2>Disclaimer</h2>
+<p>Telly is an independent app built on the Buffer API. Buffer didn't make it and doesn't endorse it. It schedules, edits and removes posts only through the user's connected Buffer account, and only when the user approves.</p>
+</body>
+</html>

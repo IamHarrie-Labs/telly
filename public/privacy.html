@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Telly privacy</title>
+    <meta name="theme-color" content="#615e50" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body data-mode="app">
+    <header class="site-header">
+      <div class="header-bar">
+        <a href="/" class="wordmark" aria-label="Telly home">
+          <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
+          <span>Telly</span>
+        </a>
+        <nav class="header-nav" aria-label="Main navigation">
+          <ul><li><a class="nav-link" href="/">Back to Telly</a></li></ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app-shell doc" id="main">
+      <div class="view-intro">
+        <span class="label label-light">Privacy</span>
+        <h1 class="view-title">What Telly stores about you</h1>
+        <p class="intro-text">Last updated 14 November 2026</p>
+      </div>
+
+      <article class="card doc-body">
+        <h2>What Telly does</h2>
+        <p>Telly writes a set of social posts from your event details and schedules them through your Buffer account. When a detail changes, it shows you the corrections and applies only the ones you approve.</p>
+
+        <h2>What Telly can access</h2>
+        <p>You choose this on Buffer's consent screen. Telly asks for four permissions: read your account and channels (<code>account:read</code>), read your posts (<code>posts:read</code>), create and edit posts (<code>posts:write</code>), and stay connected without asking you to sign in every hour (<code>offline_access</code>). It does not read analytics, comments or anything outside Buffer.</p>
+
+        <h2>What Telly stores</h2>
+        <ul>
+          <li><strong>Your Buffer sign-in tokens</strong> stay in an encrypted cookie in your own browser. They are not saved in a database.</li>
+          <li><strong>Each campaign</strong> is saved in a database: the event details you typed, your Buffer account ID, the IDs of the Buffer posts Telly created, and the text, times and event card Telly last wrote to them. Telly needs this to notice when a post was edited by hand.</li>
+        </ul>
+        <p>Telly has no analytics, no advertising and no tracking cookies. It does not sell or share your data. The database is hosted by Neon and the app by Vercel.</p>
+
+        <h2>The demo</h2>
+        <p>The demo works without a Buffer account. Its campaigns and practice posts are kept in the same database under a random demo ID, never reach Buffer or any social network, and are deleted after seven days.</p>
+
+        <h2>The event card</h2>
+        <p>If you leave "Add this event card" ticked, Telly draws a picture of the event's title, date, time, venue and price and attaches it to each post. The picture isn't stored anywhere: its web address carries those details, signed so only Telly can make one, and the image is drawn when Buffer or a reader opens it. Anyone with the address can see the card, just as anyone can see the post it's on.</p>
+
+        <h2>Listen</h2>
+        <p>The Listen button uses your browser's built-in voice. The text is read on your device and is not sent to Telly.</p>
+
+        <h2>Reading a flyer</h2>
+        <p>If you upload a flyer, the image is sent once to Anthropic's Claude API so it can read the event details. Telly does not save the image. Anthropic handles it under its commercial terms and does not use it to train models. Uploading a flyer is optional; you can always type the details instead.</p>
+
+        <h2>Deleting your data</h2>
+        <p>While connected, use <strong>Delete my Telly data</strong> at the bottom of the app to remove every campaign Telly saved for your account. <strong>Disconnect</strong> removes the sign-in cookie from your browser. Posts already scheduled in Buffer stay in Buffer; remove those there if you want them gone. You can also revoke Telly's access at any time from your Buffer account settings.</p>
+      </article>
+
+      <footer class="app-footer">
+        <div class="app-footer-top">
+          <a href="/" class="wordmark" aria-label="Telly home">
+            <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
+            <span>Telly</span>
+          </a>
+          <div class="app-footer-links">
+            <a class="u-link" href="/"><span>Home</span></a>
+            <a class="u-link" href="/auth/login"><span>Connect Buffer</span></a>
+          </div>
+        </div>
+        <p class="app-footer-note">An independent app built on the Buffer API. Not made or endorsed by Buffer.</p>
+      </footer>
+    </main>
+  </body>
+</html>
