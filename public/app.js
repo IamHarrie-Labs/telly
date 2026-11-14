@@ -116,6 +116,27 @@ function setMode(mode) {
   document.body.classList.remove('is-loading');
 }
 
+// A signed-in visitor looking at the landing page gets a way back into the app, in place of
+// the Connect and demo links.
+function pointLandingAtDashboard(demo) {
+  const label = demo ? 'Back to the demo' : 'Open your dashboard';
+  for (const link of document.querySelectorAll('#signed-out a[href="/auth/login"], #landing-nav a[href="/auth/login"], #sticky-cta')) {
+    link.setAttribute('href', '/');
+    if (link.id === 'sticky-cta') {
+      const title = link.querySelector('.sticky-copy span');
+      const note = link.querySelector('.sticky-copy small');
+      if (title) title.textContent = label;
+      if (note) note.textContent = 'Telly';
+    } else if (!link.children.length) link.textContent = label;
+  }
+  // The Connect links above now lead back in, so the separate demo links are redundant.
+  for (const link of document.querySelectorAll('#signed-out a[href="/demo"], #landing-nav a[href="/demo"]')) {
+    const item = link.closest('li');
+    if (item) item.hidden = true;
+    else link.hidden = true;
+  }
+}
+
 // Banners close when clicked.
 for (const id of ['error', 'notice']) $(id).addEventListener('click', () => message(id, ''));
 
@@ -803,6 +824,13 @@ async function init() {
   }
   if (!session.connected) {
     setMode('landing');
+    return;
+  }
+
+  // The logo and Home link open the landing page even while signed in (or in the demo).
+  if (params.has('home')) {
+    setMode('landing');
+    pointLandingAtDashboard(Boolean(session.demo));
     return;
   }
 

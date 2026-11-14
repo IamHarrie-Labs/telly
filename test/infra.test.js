@@ -62,3 +62,14 @@ test('vercel.json sends the same security headers as the server', () => {
   const sent = Object.fromEntries(vercel.headers[0].headers.map((h) => [h.key, h.value]));
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) assert.equal(sent[name], value, name);
 });
+
+test('the logo opens the landing page, even for signed-in visitors', () => {
+  for (const file of ['index.html', 'privacy.html', 'terms.html', 'feedback.html']) {
+    const html = fs.readFileSync(new URL(`../public/${file}`, import.meta.url), 'utf8');
+    const logos = html.match(/<a href="[^"]*" class="wordmark"[^>]*>/g) || [];
+    assert.ok(logos.length, `${file} has a logo link`);
+    for (const logo of logos.filter((l) => !l.includes('wordmark-lg'))) assert.match(logo, /href="\/\?home"/, `${file}: ${logo}`);
+  }
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /params\.has\('home'\)/, 'the app shows the landing page for ?home');
+});
