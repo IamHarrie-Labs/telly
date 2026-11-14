@@ -57,10 +57,14 @@ function el(tag, props = {}, ...children) {
   return node;
 }
 
+// Success notes clear themselves after a few seconds; errors stay until clicked.
+const messageTimers = {};
 function message(id, text) {
   const node = $(id);
   node.textContent = text || '';
   node.hidden = !text;
+  clearTimeout(messageTimers[id]);
+  if (text && id === 'notice') messageTimers[id] = setTimeout(() => message(id, ''), 6000);
 }
 const showError = (text) => { message('error', text); if (text) message('notice', ''); };
 const showNotice = (text) => { message('notice', text); if (text) message('error', ''); };
