@@ -113,6 +113,16 @@ const server = http.createServer(async (req, res) => {
     return json(res, 400, { error: 'unsupported_grant_type' });
   }
 
+  // Test controls: make a post fail, pause or disconnect a channel, or expire access tokens,
+  // so the end-to-end checks can see how Telly reacts. The real Buffer has nothing like this.
+  if (req.method === 'POST' && url.pathname === '/_control') {
+    const c = JSON.parse((await readBody(req)) || '{}');
+    if (c.postId && posts.has(c.postId)) Object.assign(posts.get(c.postId), c.set || {});
+    if (c.channelId) Object.assign(channels.find((ch) => ch.id === c.channelId) || {}, c.set || {});
+    if (c.expireAccessTokens) accessTokens.clear();
+    return json(res, 200, { ok: true });
+  }
+
   if (req.method === 'POST' && url.pathname === '/') {
     const token = (req.headers.authorization || '').replace(/^Bearer /, '');
     if (!accessTokens.has(token)) return json(res, 401, { errors: [{ message: 'Unauthorized' }] });

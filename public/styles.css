@@ -891,3 +891,20 @@ body[data-mode='app'] .header-bar { left: var(--edge); right: var(--edge); trans
   .reveal-text .w { opacity: 1; }
   .signature { stroke-dashoffset: 0; }
 }
+
+/* ---- Background watching ---------------------------------------------------------- */
+.watch { margin-top: 24px; }
+.watch-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.watch-title { font-size: 1.125rem; margin: 0; }
+.watch-explain { margin: 12px 0; max-width: 70ch; }
+.watch-issues { margin: 0 0 12px; padding: 12px 16px 12px 32px; background: var(--warn-bg); color: var(--warn); border-radius: 12px; }
+.watch-issues li + li { margin-top: 6px; }
+.watch-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 12px; }
+.watch-email { flex: 1 1 240px; display: flex; flex-direction: column; gap: 6px; }
+#watch-off { margin-top: 12px; }
+.footer-bottom-links { display: flex; gap: 16px; }
+
+/* ---- Feedback page ------------------------------------------------------------------ */
+.feedback-form { display: flex; flex-direction: column; gap: 10px; }
+.feedback-form textarea { min-height: 160px; }
+.feedback-form .row { margin-top: 6px; }

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Telly feedback</title>
+    <meta name="theme-color" content="#615e50" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body data-mode="app">
+    <header class="site-header">
+      <div class="header-bar">
+        <a href="/" class="wordmark" aria-label="Telly home">
+          <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
+          <span>Telly</span>
+        </a>
+        <nav class="header-nav" aria-label="Main navigation">
+          <ul><li><a class="nav-link" href="/">Back to Telly</a></li></ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app-shell doc" id="main">
+      <div class="view-intro">
+        <span class="label label-light">Feedback</span>
+        <h1 class="view-title">Tell us what to fix</h1>
+        <p class="intro-text">Last updated 14 November 2026</p>
+      </div>
+
+      <article class="card doc-body">
+        <p>Found something confusing, broken, or missing? A sentence is plenty. If you'd like a reply, include an email address in your message.</p>
+        <form id="feedback-form" class="feedback-form">
+          <label for="feedback-message">Your feedback</label>
+          <textarea id="feedback-message" name="message" required minlength="3" maxlength="4000"></textarea>
+          <div class="row">
+            <button id="feedback-send" type="submit" class="primary">Send feedback</button>
+          </div>
+          <p id="feedback-result" class="muted" role="status" aria-live="polite"></p>
+        </form>
+      </article>
+
+      <footer class="app-footer">
+        <div class="app-footer-top">
+          <a href="/" class="wordmark" aria-label="Telly home">
+            <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
+            <span>Telly</span>
+          </a>
+          <div class="app-footer-links">
+            <a class="u-link" href="/"><span>Home</span></a>
+            <a class="u-link" href="/auth/login"><span>Connect Buffer</span></a>
+            <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
+            <a class="u-link" href="/terms.html"><span>Terms</span></a>
+            <a class="u-link" href="/feedback.html"><span>Feedback</span></a>
+          </div>
+        </div>
+        <p class="app-footer-note">An independent app built on the Buffer API. Not made or endorsed by Buffer.</p>
+      </footer>
+    </main>
+      <script src="/feedback.js" type="module"></script>
+  </body>
+</html>
