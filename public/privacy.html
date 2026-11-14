@@ -6,7 +6,10 @@
     <title>Telly privacy</title>
     <meta name="theme-color" content="#615e50" />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
   </head>
   <body data-mode="app">
     <header class="site-header">
@@ -70,13 +73,13 @@
             <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
             <span>Telly</span>
           </a>
-          <div class="app-footer-links">
-            <a class="u-link" href="/"><span>Home</span></a>
+          <nav class="app-footer-links" aria-label="Footer">
+            <a class="u-link" href="/?home"><span>Home</span></a>
             <a class="u-link" href="/auth/login"><span>Connect Buffer</span></a>
-            <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
+            <a class="u-link" href="/privacy.html" aria-current="page"><span>Privacy</span></a>
             <a class="u-link" href="/terms.html"><span>Terms</span></a>
-            <a class="u-link" href="/feedback.html"><span>Feedback</span></a>
-          </div>
+            <a class="u-link" href="/feedback.html"><span>Send feedback</span></a>
+          </nav>
         </div>
         <p class="app-footer-note">An independent app built on the Buffer API. Not made or endorsed by Buffer.</p>
       </footer>

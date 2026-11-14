@@ -165,14 +165,15 @@ body[data-mode='app'] .header-bar { left: var(--edge); right: var(--edge); trans
 @media (max-width: 760px) {
   .header-nav .nav-link:not(.nav-cta):not(.nav-demo), .header-nav .dropdown { display: none; }
   body[data-mode='landing'] .header-bar { left: var(--edge); right: var(--edge); transform: none; justify-content: space-between; }
-  #account-line, #demo-connect { display: none; }
+  /* In the demo, Connect Buffer is the next step, so on a phone it keeps its place and the
+     smaller items give way: the Demo badge (the page says so already) and the word "Telly". */
+  #account-line, #demo-badge { display: none; }
+  body[data-mode='app'] .header-bar .wordmark span { display: none; }
+  #demo-connect:not([hidden]) { background: var(--olive); color: #fff; opacity: 1; border-radius: 999px; padding: 6px 12px; }
   .account { flex-wrap: nowrap; gap: 4px; }
   .account .nav-link, .account .ghost { padding: 6px 8px; font-size: 0.875rem; }
   .header-bar { gap: 8px; padding-left: 14px; }
   .nav-link { font-size: 0.875rem; }
-}
-@media (max-width: 350px) {
-  body[data-mode='app'] .header-bar .wordmark span { display: none; }
 }
 
 /* ---- Toasts ---------------------------------------------------------------------- */
@@ -662,16 +663,31 @@ body.is-ready .hero-bottom > :nth-child(2) { transition-delay: 0.25s; }
 .footer-brand p { margin: 14px 0 0; font-size: 0.875rem; line-height: 1.3; }
 .footer-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 @media (max-width: 560px) {
-  .footer-cols { grid-template-columns: 1fr 1fr; row-gap: 28px; }
-  .footer-cols > div:last-child { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; gap: 8px 20px; padding-top: 20px; border-top: 1px solid var(--line); }
-  .footer-bottom { margin-top: 40px; }
+  .footer-cols { grid-template-columns: 1fr 1fr; row-gap: 32px; }
+  .footer-bottom { margin-top: 36px; }
 }
-.footer-cols > div { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.footer-cols > div { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.footer-head { font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.55; margin: 0 0 4px; }
+.footer-cols .u-link { font-size: 0.9375rem; }
+.u-ext, .to-top { display: inline-flex; align-items: center; gap: 5px; }
+.u-ext svg, .to-top svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.35s var(--ease-out); }
+.u-ext:hover svg { transform: translate(2px, -2px); }
+.to-top:hover svg { transform: translateY(-2px); }
+.u-link[aria-current='page'] { font-weight: 600; }
+.u-link[aria-current='page'] span::after { transform: scaleX(1); }
+/* Delete my Telly data: styled as a link, in the error colour, so it reads as a quiet action. */
+.link-danger {
+  min-height: 0; padding: 1px 0; border: 0; border-radius: 0; background: none; font: inherit; font-size: 0.875rem; font-weight: 400;
+  color: var(--error-text); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 3px; cursor: pointer; transition: text-decoration-color 0.2s;
+}
+.link-danger:hover { border: 0; text-decoration-color: currentColor; }
+.link-danger:active { transform: none; }
 .u-link { position: relative; text-decoration: none; font-size: 0.875rem; padding: 1px 0; }
 .u-link span { position: relative; }
 .u-link span::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform 0.45s var(--ease-out); }
 .u-link:hover span::after, .u-link:focus-visible span::after { transform: scaleX(1); transform-origin: left; }
-.footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 72px; font-size: 0.75rem; }
+.footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 0.75rem; }
 .footer-bottom .u-link { font-size: 0.75rem; }
 .footer-disclaimer { font-size: 0.6875rem; line-height: 1.5; color: rgba(255, 255, 255, 0.9); margin: 16px 0 0; max-width: 120ch; }
 
@@ -921,7 +937,8 @@ pre { white-space: pre-wrap; word-break: break-word; background: var(--surface);
 .app-footer-links .u-link, .app-footer-links button { white-space: nowrap; }
 @media (max-width: 560px) {
   .app-footer-top { flex-direction: column; align-items: flex-start; padding: 22px; }
-  .app-footer-links #delete-data { flex-basis: 100%; justify-content: flex-start; margin-left: -10px; }
+  .app-footer-links { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; width: 100%; }
+  .app-footer-links #delete-data { grid-column: 1 / -1; justify-self: start; margin-top: 4px; }
   .app-footer-note { padding: 0 6px; }
 }
 .app-footer-note { font-size: 0.6875rem; color: var(--muted); margin: 14px auto 0; }

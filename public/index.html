@@ -9,7 +9,10 @@
     <meta property="og:title" content="Telly · Tell it once. Keep it current." />
     <meta property="og:description" content="Plan your event posts in Buffer, then review and apply corrections when the details change." />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
   </head>
   <body class="is-loading">
     <a class="skip-link" href="#main">Skip to content</a>
@@ -425,32 +428,31 @@
                   </a>
                   <p>Tell it once.<br />Keep it current.</p>
                 </div>
-                <div class="footer-cols">
+                <nav class="footer-cols" aria-label="Footer">
                   <div>
-                    <a class="u-link" href="#top"><span>Home</span></a>
-                    <a class="u-link" href="/auth/login"><span>Connect</span></a>
+                    <h3 class="footer-head">Get started</h3>
+                    <a class="u-link" href="/auth/login"><span>Connect Buffer</span></a>
                     <a class="u-link" href="/demo"><span>Try the demo</span></a>
+                    <a class="u-link" href="/feedback.html"><span>Send feedback</span></a>
                   </div>
                   <div>
+                    <h3 class="footer-head">Learn</h3>
                     <a class="u-link" href="#why"><span>Why Telly</span></a>
                     <a class="u-link" href="#difference"><span>The difference</span></a>
                     <a class="u-link" href="#how"><span>How it works</span></a>
                     <a class="u-link" href="#built"><span>Built on Buffer</span></a>
                   </div>
                   <div>
+                    <h3 class="footer-head">Legal</h3>
                     <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
                     <a class="u-link" href="/terms.html"><span>Terms</span></a>
-                    <a class="u-link" href="/feedback.html"><span>Send feedback</span></a>
-                    <a class="u-link" href="https://buffer.com" rel="noopener"><span>Buffer</span></a>
+                    <a class="u-link u-ext" href="https://buffer.com" target="_blank" rel="noopener"><span>Buffer</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2.5h5.5V8M9.5 2.5 2.5 9.5" /></svg><span class="sr-only"> (opens in a new tab)</span></a>
                   </div>
-                </div>
+                </nav>
               </div>
               <div class="footer-bottom">
                 <span>© 2026 Telly. Made for Buffer Commit.</span>
-                <span class="footer-bottom-links">
-                  <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
-                  <a class="u-link" href="/terms.html"><span>Terms</span></a>
-                </span>
+                <a class="u-link to-top" href="#top"><span>Back to top</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10V2.5M2.5 6 6 2.5 9.5 6" /></svg></a>
               </div>
             </div>
             <p class="footer-disclaimer">Telly is an independent app built on the Buffer API. It is not made or endorsed by Buffer. Telly schedules, edits and removes posts only through your connected Buffer account and only when you approve.</p>
@@ -632,12 +634,13 @@
               <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
               <span>Telly</span>
             </a>
-            <div class="app-footer-links">
+            <nav class="app-footer-links" aria-label="Footer">
+              <a class="u-link" href="/?home"><span>Home</span></a>
               <a class="u-link" href="/feedback.html"><span>Send feedback</span></a>
-              <a class="u-link" href="/terms.html"><span>Terms</span></a>
               <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
-              <button id="delete-data" type="button" class="ghost small" hidden>Delete my Telly data</button>
-            </div>
+              <a class="u-link" href="/terms.html"><span>Terms</span></a>
+              <button id="delete-data" type="button" class="link-danger" hidden>Delete my Telly data</button>
+            </nav>
           </div>
           <p class="app-footer-note">An independent app built on the Buffer API. Not made or endorsed by Buffer.</p>
         </footer>

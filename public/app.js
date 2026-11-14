@@ -106,8 +106,39 @@ function show(view, back = null) {
   void node.offsetWidth;
   node.classList.add('view-enter');
   state.back = back;
+  syncHistory(view);
   window.scrollTo({ top: 0 });
 }
+
+// The browser's Back button (and a phone's back gesture) goes back one screen, the same as
+// the Back link on the page. Each screen has a depth: the campaign list is 0, a campaign or a
+// new-campaign form is 1, and changing a campaign or reviewing corrections is 2. History holds
+// one entry per level, so going deeper pushes, staying level replaces, and going up rewinds.
+let restoring = false; // true while handling the browser's own Back
+let silentPops = 0; // rewinds Telly made itself, which must not trigger another step back
+function depthOf(view) {
+  if (view === 'view-campaigns') return 0;
+  if (view === 'view-review') return 2;
+  if (view === 'view-editor') return state.editor?.mode === 'change' ? 2 : 1;
+  return 1;
+}
+function syncHistory(view) {
+  if (restoring) return;
+  const depth = depthOf(view);
+  const current = history.state?.tellyDepth ?? 0;
+  if (depth > current) history.pushState({ tellyDepth: depth }, '');
+  else if (depth === current) history.replaceState({ tellyDepth: depth }, '');
+  else {
+    silentPops += 1;
+    history.go(depth - current);
+  }
+}
+window.addEventListener('popstate', () => {
+  if (silentPops) { silentPops -= 1; return; }
+  if (!state.back) return;
+  restoring = true;
+  try { state.back(); } finally { restoring = false; }
+});
 
 // Landing page for visitors, app shell once connected.
 function setMode(mode) {
@@ -120,11 +151,12 @@ function setMode(mode) {
   document.body.classList.remove('is-loading');
 }
 
-// A signed-in visitor looking at the landing page gets a way back into the app, in place of
-// the Connect and demo links.
+// A visitor who is already inside Telly and opens the landing page gets a way back in.
+// Demo visitors keep every Connect Buffer link, since connecting is their next step; only the
+// "Try the demo" links change, to "Back to the demo". Connected visitors see "Open your
+// dashboard" where Connect was, and the demo links are hidden.
 function pointLandingAtDashboard(demo) {
-  const label = demo ? 'Back to the demo' : 'Open your dashboard';
-  for (const link of document.querySelectorAll('#signed-out a[href="/auth/login"], #landing-nav a[href="/auth/login"], #sticky-cta')) {
+  const relabel = (link, label) => {
     link.setAttribute('href', '/');
     if (link.id === 'sticky-cta') {
       const title = link.querySelector('.sticky-copy span');
@@ -132,9 +164,20 @@ function pointLandingAtDashboard(demo) {
       if (title) title.textContent = label;
       if (note) note.textContent = 'Telly';
     } else if (!link.children.length) link.textContent = label;
+    else {
+      const span = link.querySelector('span:not([aria-hidden])');
+      if (span) span.textContent = label;
+    }
+  };
+  const demoLinks = document.querySelectorAll('#signed-out a[href="/demo"], #landing-nav a[href="/demo"]');
+  if (demo) {
+    for (const link of demoLinks) relabel(link, 'Back to the demo');
+    return;
   }
-  // The Connect links above now lead back in, so the separate demo links are redundant.
-  for (const link of document.querySelectorAll('#signed-out a[href="/demo"], #landing-nav a[href="/demo"]')) {
+  for (const link of document.querySelectorAll('#signed-out a[href="/auth/login"], #landing-nav a[href="/auth/login"], #sticky-cta')) {
+    relabel(link, 'Open your dashboard');
+  }
+  for (const link of demoLinks) {
     const item = link.closest('li');
     if (item) item.hidden = true;
     else link.hidden = true;
@@ -800,7 +843,7 @@ $('apply').addEventListener('click', () => {
 // ---- Navigation, session, org ------------------------------------------------------
 
 for (const button of document.querySelectorAll('[data-back]')) {
-  button.addEventListener('click', () => { showError(''); state.back?.(); });
+  button.addEventListener('click', () => { showError(''); state.back?.(); }); // show() rewinds history to match
 }
 $('new-campaign').addEventListener('click', () => openEditor('new'));
 
