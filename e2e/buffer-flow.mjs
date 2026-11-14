@@ -125,6 +125,12 @@ ok(history.at(-1).type === 'undo' && history.at(-2).undoneBy === history.at(-1).
 const again = await api(`/api/campaigns/${id}/history/${history.at(-2).id}/undo/preview`, {});
 ok(again.status === 409, 'a change can only be undone once');
 
+// A new status with posts still waiting for approval is not saved and leaves no history line.
+const historyBefore = (await api(`/api/campaigns/${id}`)).body.campaign.history.length;
+applied = await api(`/api/campaigns/${id}/changes/apply`, { facts: { ...moved, status: 'soldOut' } });
+const unapproved = (await api(`/api/campaigns/${id}`)).body.campaign;
+ok(unapproved.facts.status === 'upcoming' && unapproved.history.length === historyBefore, `an unapproved status change is not saved (${applied.body.summary})`);
+
 // Sold out: the scheduled posts say so.
 applied = await api(`/api/campaigns/${id}/changes/apply`, { facts: { ...moved, status: 'soldOut' }, approve: 'all' });
 const soldOut = await post(back.find((p) => p.kind === 'reminder').postId);
