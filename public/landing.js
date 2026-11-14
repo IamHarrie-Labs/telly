@@ -366,17 +366,19 @@ function setupStickyCard() {
   const card = document.getElementById('sticky-cta');
   const closing = document.querySelector('.closing-copy');
   if (!card || !closing) return;
-  card.hidden = false;
   // On a phone the hero already has its own button, so the card waits until the hero is done.
   const narrow = window.matchMedia('(max-width: 760px)');
   const hero = document.querySelector('[data-hero]');
-  scrollHandlers.push(() => {
+  const update = () => {
     const rect = closing.getBoundingClientRect();
     const inHero = narrow.matches && hero && hero.getBoundingClientRect().bottom > window.innerHeight * 0.6;
     const away = inHero || (rect.top < window.innerHeight && rect.bottom > 0);
     card.classList.toggle('is-away', away);
     card.toggleAttribute('inert', away);
-  });
+  };
+  update(); // Set the starting state before the card appears, so it never flashes in.
+  card.hidden = false;
+  scrollHandlers.push(update);
 }
 
 // ---- Helpers -------------------------------------------------------------------------
