@@ -36,6 +36,7 @@ const state = {
   version: null, // the campaign version the review was built from
   back: null, // what the Back button does in the current view
   flyer: false, // whether the server can read flyers
+  flyerUpload: null, // { image, altText }: the flyer just read, which can be the picture on posts
   demo: false, // a demo visitor: posts go to a practice queue, not Buffer
   ideas: false, // whether Telly may save to Buffer's Ideas and Snippets
   orgs: [], // the Buffer organizations this person belongs to
@@ -172,29 +173,20 @@ function setMode(mode) {
 }
 
 // A visitor who is already inside Telly and opens the landing page gets a way back in.
-// Demo visitors keep every Connect Buffer link, since connecting is their next step; only the
-// "Try the demo" links change, to "Back to the demo". Connected visitors see "Open your
-// dashboard" where Connect was, and the demo links are hidden.
+// Demo visitors see the landing page as everyone else does, since connecting is their next step.
+// Connected visitors see "Open your dashboard" where Connect was, and the demo links are hidden.
 function pointLandingAtDashboard(demo) {
   const relabel = (link, label) => {
     link.setAttribute('href', '/');
-    if (link.id === 'sticky-cta') {
-      const title = link.querySelector('.sticky-copy span');
-      const note = link.querySelector('.sticky-copy small');
-      if (title) title.textContent = label;
-      if (note) note.textContent = 'Telly';
-    } else if (!link.children.length) link.textContent = label;
+    if (!link.children.length) link.textContent = label;
     else {
       const span = link.querySelector('span:not([aria-hidden])');
       if (span) span.textContent = label;
     }
   };
   const demoLinks = document.querySelectorAll('#signed-out a[href="/demo"], #landing-nav a[href="/demo"]');
-  if (demo) {
-    for (const link of demoLinks) relabel(link, 'Back to the demo');
-    return;
-  }
-  for (const link of document.querySelectorAll('#signed-out a[href="/auth/login"], #landing-nav a[href="/auth/login"], #sticky-cta')) {
+  if (demo) return;
+  for (const link of document.querySelectorAll('#signed-out a[href="/auth/login"], #landing-nav a[href="/auth/login"]')) {
     relabel(link, 'Open your dashboard');
   }
   for (const link of demoLinks) {
@@ -368,8 +360,9 @@ function renderChannelOptions() {
   }
 }
 
-function openEditor(mode, { status, title, help } = {}) {
+function openEditor(mode, { status, title, help, prefill } = {}) {
   state.editor = { mode, status };
+  state.pendingFacts = null;
   showError('');
   showNotice('');
   $('preview').hidden = true;
@@ -378,7 +371,9 @@ function openEditor(mode, { status, title, help } = {}) {
     $('editor-help').textContent = 'Check these details before you preview the posts. You can update the event later if plans change.';
     $('editor-submit').textContent = 'Preview campaign';
     $('channel-field').hidden = false;
-    fillForm(null);
+    $('page-field').hidden = false;
+    state.flyerUpload = null;
+    fillForm(prefill || null);
     renderChannelOptions();
     $('flyer-drop').hidden = !state.flyer;
     $('flyer-status').textContent = '';
@@ -388,6 +383,7 @@ function openEditor(mode, { status, title, help } = {}) {
     $('editor-help').textContent = help || 'Edit what changed. Telly shows every affected post before anything in Buffer changes.';
     $('editor-submit').textContent = 'Review changes';
     $('channel-field').hidden = true;
+    $('page-field').hidden = true;
     $('flyer-drop').hidden = true;
     fillForm(state.campaign.facts);
     show('view-editor', () => openCampaign(state.campaign));
@@ -431,7 +427,8 @@ $('flyer-file').addEventListener('change', async (event) => {
   try {
     const image = await shrinkImage(file);
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const { facts } = await api('/api/flyer', { method: 'POST', body: JSON.stringify({ image, timeZone, today: localToday() }) });
+    const { facts, altText } = await api('/api/flyer', { method: 'POST', body: JSON.stringify({ image, timeZone, today: localToday() }) });
+    state.flyerUpload = { image, altText: altText || '' };
     const form = $('facts-form');
     const filled = [];
     for (const name of FORM_FIELDS) {
@@ -466,8 +463,11 @@ $('facts-form').addEventListener('submit', (event) => {
     if (state.editor.mode === 'new') {
       const channelIds = [...$('facts-form').querySelectorAll('input[name=channel]:checked')].map((i) => i.value);
       const services = servicesFor(channelIds);
-      const result = await api('/api/campaigns/preview', { method: 'POST', body: JSON.stringify({ facts, channelIds, services }) });
-      state.pendingFacts = { facts: result.facts, channelIds, services };
+      const eventPage = $('use-page').checked;
+      const result = await api('/api/campaigns/preview', {
+        method: 'POST', body: JSON.stringify({ facts, channelIds, services, eventPage, pageId: state.pendingFacts?.pageId }),
+      });
+      state.pendingFacts = { facts: result.facts, channelIds, services, pageId: result.pageId, eventPage };
       state.edits = {};
       renderPreview(result.items, result.facts, result.card);
     } else {
@@ -507,6 +507,14 @@ function renderPreview(items, facts, card) {
     $('card-image').alt = card.altText;
     $('card-alt').textContent = `Alt text: ${card.altText}`;
     $('with-card').checked = true;
+  }
+  const flyer = state.flyerUpload;
+  $('flyer-choice').hidden = !flyer;
+  if (flyer) {
+    $('flyer-image').src = flyer.image;
+    $('flyer-image').alt = flyer.altText;
+    $('flyer-alt').value = flyer.altText;
+    $('use-flyer').checked = false;
   }
   updateCount();
   $('preview').hidden = false;
@@ -560,8 +568,18 @@ function editablePost(item, facts, updateCount) {
 
 $('schedule').addEventListener('click', () => {
   busy($('schedule'), async () => {
-    const { facts, channelIds, services } = state.pendingFacts;
-    const body = { facts, channelIds, services, edits: state.edits, withCard: $('with-card').checked && !$('card-preview').hidden, organizationId: state.orgId };
+    const { facts, channelIds, services, pageId, eventPage } = state.pendingFacts;
+    const body = {
+      facts, channelIds, services, pageId, eventPage, edits: state.edits,
+      withCard: $('with-card').checked && !$('card-preview').hidden, organizationId: state.orgId,
+    };
+    // The organiser's own flyer: stored once, then attached with their description.
+    if (state.flyerUpload && $('use-flyer').checked) {
+      const altText = $('flyer-alt').value.trim();
+      if (altText.length < 10) throw new Error(`Describe the flyer for people who can't see it, or untick "Use your own flyer".`);
+      const { url } = await api('/api/images', { method: 'POST', body: JSON.stringify({ image: state.flyerUpload.image }) });
+      body.image = { url, altText };
+    }
     let result;
     try {
       result = await api('/api/campaigns', { method: 'POST', body: JSON.stringify(body) });
@@ -598,6 +616,9 @@ function openCampaign(campaign) {
   renderStatusActions(campaign);
   renderHistory(campaign);
   renderBufferPanel(campaign);
+  renderPagePanel(campaign);
+  $('campaign-tell').hidden = !state.flyer || facts.status === 'cancelled';
+  $('tell-text').value = '';
   $('campaign-fix').hidden = true;
   $('campaign-checked').textContent = '';
   show('view-campaign', () => show('view-campaigns'));
@@ -622,6 +643,56 @@ function refreshCampaign(campaign) {
     })
     .catch(() => { /* keep the stored view; the next action will surface any error */ });
 }
+
+// ---- Event page, plain-words changes, repeat ------------------------------------------
+
+function renderPagePanel(campaign) {
+  const url = campaign.facts.pageUrl;
+  $('campaign-page').hidden = !url;
+  if (!url) return;
+  $('page-link').href = url;
+  $('page-link').textContent = url.replace(/^https?:\/\//, '');
+  $('open-page').href = url;
+}
+
+$('copy-page').addEventListener('click', async () => {
+  const url = state.campaign?.facts.pageUrl;
+  if (!url) return;
+  try {
+    await navigator.clipboard.writeText(url);
+    $('copy-page').textContent = 'Copied';
+  } catch {
+    $('copy-page').textContent = 'Select the link to copy it';
+  }
+  setTimeout(() => { $('copy-page').textContent = 'Copy link'; }, 2000);
+});
+
+$('tell-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const text = $('tell-text').value.trim();
+  if (!text) return $('tell-text').focus();
+  busy($('tell-submit'), async () => {
+    showError('');
+    const { facts } = await api(`/api/campaigns/${state.campaign.id}/understand`, {
+      method: 'POST', body: JSON.stringify({ text, today: localToday() }),
+    });
+    await reviewChange(facts);
+  });
+});
+
+// A week later at the same time, as a starting point for the next one.
+function weekLater(startsLocal) {
+  const [date, time] = startsLocal.split('T');
+  const [y, m, d] = date.split('-').map(Number);
+  return `${new Date(Date.UTC(y, m - 1, d + 7)).toISOString().slice(0, 10)}T${time}`;
+}
+
+$('repeat-event').addEventListener('click', () => {
+  const { facts } = state.campaign;
+  openEditor('new', { prefill: { ...facts, startsLocal: weekLater(facts.startsLocal) } });
+  $('editor-help').textContent = 'The details are copied from your last event, a week later. Check the date and anything else that differs, then preview.';
+  $('f-starts').focus();
+});
 
 $('campaign-fix').addEventListener('click', () => busy($('campaign-fix'), () => reviewChange({ ...state.campaign.facts })));
 

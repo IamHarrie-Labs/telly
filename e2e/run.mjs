@@ -27,6 +27,7 @@ const env = {
   BUFFER_AUTH_URL: `http://localhost:${MOCK_PORT}/auth`,
   BUFFER_TOKEN_URL: `http://localhost:${MOCK_PORT}/token`,
   TELLY_IDEAS: '1', // the fake Buffer answers Ideas and Snippets
+  TELLY_FAKE_FLYER: '1', // a local stand-in for Claude reading flyers and plain-words changes
   // Empty values win over .env files, so the run uses the file store and no paid APIs.
   ANTHROPIC_API_KEY: '',
   DATABASE_URL: '',
@@ -80,7 +81,7 @@ try {
     throw error;
   });
 
-  for (const flow of ['buffer-flow.mjs', 'demo-flow.mjs', 'watch-flow.mjs']) {
+  for (const flow of ['buffer-flow.mjs', 'edge-flow.mjs', 'demo-flow.mjs', 'watch-flow.mjs']) {
     console.log(`\n== ${flow}`);
     const code = await new Promise((resolve) => {
       const run = spawn(process.execPath, [path.join('e2e', flow)], { cwd: root, env: { ...env, BASE }, stdio: 'inherit' });
