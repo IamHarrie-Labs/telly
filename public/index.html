@@ -26,23 +26,13 @@
         </a>
 
         <nav class="header-nav" id="landing-nav" aria-label="Main navigation" hidden>
-          <ul>
+          <ul class="nav-links">
+            <li><a class="nav-link" href="#why">Why Telly</a></li>
+            <li><a class="nav-link" href="#difference">Features</a></li>
             <li><a class="nav-link" href="#how">How it works</a></li>
-            <li class="dropdown" data-dropdown>
-              <button type="button" class="nav-link" aria-expanded="false" aria-controls="learn-panel" aria-haspopup="true" data-dropdown-button>Learn</button>
-              <div class="dropdown-panel" id="learn-panel" data-dropdown-panel hidden>
-                <ul>
-                  <li><a href="#why"><span class="tile tile-why" aria-hidden="true"></span>Why Telly</a></li>
-                  <li><a href="#difference"><span class="tile tile-diff" aria-hidden="true"></span>The difference</a></li>
-                  <li><a href="#built"><span class="tile tile-built" aria-hidden="true"></span>Built on Buffer</a></li>
-                  <li><a href="/privacy.html"><span class="tile tile-privacy" aria-hidden="true"></span>Privacy</a></li>
-                </ul>
-              </div>
-            </li>
             <li><a class="nav-link" href="/privacy.html">Privacy</a></li>
-            <li><a class="nav-link nav-demo" href="/demo">Demo</a></li>
-            <li><a class="nav-link nav-cta" href="/auth/login">Connect</a></li>
           </ul>
+          <a class="header-cta" href="/auth/login">Connect Buffer</a>
         </nav>
 
         <div id="account-bar" class="account" hidden>
@@ -68,178 +58,92 @@
       <!-- Landing page (signed out)                                          -->
       <!-- ================================================================== -->
       <div id="signed-out" class="landing" hidden>
-        <!-- Hero: pinned while you scroll. The frosted left half spreads across the scene,
+        <!-- Hero: pinned while you scroll over a background video. The shade deepens,
              the headline steps back, and the "Why Telly" statement lights up word by word. -->
         <section class="hero" id="top" aria-labelledby="hero-title" data-hero>
           <div class="hero-pin">
-            <!-- The scene: an event flyer on a wall, lit by string lights. -->
-            <div class="scene" aria-hidden="true">
-              <span class="scene-light"></span>
-              <span class="scene-window"></span>
-              <span class="bulbs">
-                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-              </span>
-              <div class="flyer">
-                <span class="flyer-pin"></span>
-                <span class="flyer-kicker">Free · All welcome</span>
-                <span class="flyer-title">Community<br />Workshop</span>
-                <span class="flyer-rule"></span>
-                <span class="flyer-row"><b>Saturday 19 December</b></span>
-                <span class="flyer-row">2:00 pm – 5:00 pm</span>
-                <span class="flyer-row flyer-venue">City Library</span>
-                <span class="flyer-foot">example.org/book</span>
-                <span class="sticky-note" data-note>Now at<br /><b>Town Hall</b></span>
-              </div>
-              <div class="phone">
-                <span class="phone-notch"></span>
-                <span class="phone-row"><i class="dot-a"></i><b>Announcement</b><small>Sat 5 Dec</small></span>
-                <span class="phone-row"><i class="dot-b"></i><b>Reminder</b><small>Thu 17 Dec</small></span>
-                <span class="phone-row"><i class="dot-c"></i><b>Day of</b><small>Sat 19 Dec</small></span>
-                <span class="phone-ok" data-phone-status>3 scheduled</span>
-              </div>
-            </div>
-            <div class="frost" data-frost aria-hidden="true"><span class="grain"></span></div>
-
-            <div class="timeline" data-timeline data-labels="Venue changed|#e8a25c;Start time moved|#9fb6ff;Price updated|#b5dba0;Event cancelled|#e8796a" aria-hidden="true">
-              <span class="timeline-line"></span>
-              <span class="timeline-dashes" data-dashes></span>
-              <span class="timeline-pill"><span class="timeline-pill-size" data-pill-size><i data-pill-dot></i><span data-pill-text>Venue changed</span></span></span>
+            <!-- Background: a muted, looping stock clip of people at an event. Decorative only. -->
+            <div class="hero-media" aria-hidden="true">
+              <video class="hero-video" data-hero-video autoplay muted loop playsinline preload="metadata" poster="/media/hero-poster.jpg">
+                <source src="/media/hero.mp4" type="video/mp4" />
+              </video>
+              <span class="hero-shade"></span>
+              <span class="grain"></span>
             </div>
 
             <div class="hero-copy" data-hero-copy>
-              <h1 id="hero-title" class="display">Plans change.<br />Your posts keep up.</h1>
-              <div class="cta-pair">
-                <a class="btn-pill" href="/auth/login">Connect Buffer</a>
-                <a class="text-cta text-cta-light" href="/demo">Try the demo, no account needed</a>
-              </div>
-            </div>
-
-            <div class="hero-bottom" data-hero-copy>
-              <ul class="hero-facts">
-                <li>Announcement, reminder <br />and day-of post</li>
-                <li>You approve <br />each edit</li>
-                <li>Checked again <br />in Buffer</li>
-              </ul>
-              <div class="built-with">
-                <span>Built on</span>
-                <b>the Buffer API</b>
+              <h1 id="hero-title" class="display">Plans change.<br /><span class="dim">Your posts keep up.</span></h1>
+              <div class="cta-pair cta-center">
+                <a class="btn-accent" href="/auth/login"><span>Connect Buffer</span><i aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M3.5 8.5 8.5 3.5M4.5 3.5h4v4" /></svg></i></a>
+                <a class="btn-glass" href="#how">How it works</a>
               </div>
             </div>
 
             <div class="hero-reveal" id="why" data-hero-reveal>
-              <h2 class="label label-light">Why Telly?</h2>
-              <p class="reveal-text" data-reveal aria-hidden="true">Your posts are scheduled. Then the venue changes. Now the announcement, reminder and day-of post have the wrong address.<br /><br />Change the venue once in Telly, then review the affected posts. You choose which corrections to apply. Telly saves them in Buffer and checks the result.</p>
-              <p class="sr-only">Your posts are scheduled. Then the venue changes. Now the announcement, reminder and day-of post have the wrong address. Change the venue once in Telly, then review the affected posts. You choose which corrections to apply. Telly saves them in Buffer and checks the result.</p>
+              <h2 class="kicker kicker-light">Why Telly?</h2>
+              <p class="reveal-text" data-reveal aria-hidden="true">You've scheduled the posts. Then the venue moves, and now all three send people to the wrong place.<br /><br />Tell Telly once. It shows you every post that needs fixing, you pick what changes, and it updates Buffer and checks the posts went through.</p>
+              <p class="sr-only">You've scheduled the posts. Then the venue moves, and now all three send people to the wrong place. Tell Telly once. It shows you every post that needs fixing, you pick what changes, and it updates Buffer and checks the posts went through.</p>
             </div>
           </div>
         </section>
 
-        <!-- The difference: expanding cards ------------------------------------ -->
+        <!-- The difference: a grid of four cards ----------------------------------- -->
         <section class="difference" id="difference" aria-labelledby="diff-title">
           <div class="wrap section-head">
-            <div class="head-label"><h2 class="label" id="diff-title">The difference</h2></div>
-            <div class="head-main">
-              <p class="statement">Three posts about one event.<br />Telly remembers they belong together.</p>
-              <p class="body-small">Your announcement, reminder and day-of post use the same event details. Change a detail, then review the posts that need updating.</p>
-            </div>
-            <div class="head-cta"><a class="text-cta" href="/auth/login">Connect Buffer</a></div>
+            <h2 class="kicker" id="diff-title">The difference</h2>
+            <p class="headline">One event, three posts.<br /><span class="dim">Telly knows they go together.</span></p>
           </div>
 
-          <div class="cards" data-cards>
-            <div class="wrap">
-              <div class="cards-track" data-cards-track>
-                <article class="xcard is-active" data-card tabindex="0" aria-labelledby="card-1-title">
-                  <div class="xcard-main">
-                    <div class="xcard-media media-one" aria-hidden="true">
-                      <div class="fan">
-                        <span class="mini-post"><em>Announcement</em><i></i><i></i><i class="short"></i></span>
-                        <span class="mini-post"><em>Reminder</em><i></i><i></i><i class="short"></i></span>
-                        <span class="mini-post"><em>Day of</em><i></i><i></i><i class="short"></i></span>
-                      </div>
-                      <span class="chip" style="left: 8%; top: 12%"><span class="chip-dot" style="background: #e8a25c"></span>09:00 AM</span>
-                      <span class="chip" style="left: 52%; top: 82%"><span class="chip-dot" style="background: #9fb6ff"></span>Reminder</span>
-                    </div>
-                    <div class="collapse"><div><h3 class="xcard-title" id="card-1-title">Type it once,<br />get three posts</h3></div></div>
+          <div class="wrap">
+            <div class="bento">
+              <article class="bcard bcard-a">
+                <div class="bvis" aria-hidden="true">
+                  <div class="fan">
+                    <span class="mini-post"><em>Announcement</em><i></i><i></i><i class="short"></i></span>
+                    <span class="mini-post"><em>Reminder</em><i></i><i></i><i class="short"></i></span>
+                    <span class="mini-post"><em>Day of</em><i></i><i></i><i class="short"></i></span>
                   </div>
-                  <div class="collapse">
-                    <div>
-                      <div class="xcard-note">
-                        <span class="eyebrow">Tell it once</span>
-                        <p>Enter the event details, or upload a flyer and check what Telly reads. Review the three posts and their suggested times before scheduling them in Buffer.</p>
-                      </div>
-                    </div>
-                  </div>
-                </article>
+                </div>
+                <div class="btext">
+                  <h3>Write it once, get three posts</h3>
+                  <p>Type the details or drop in your flyer. Telly drafts an announcement, a reminder and a day-of post, and you check them before anything goes to Buffer.</p>
+                </div>
+              </article>
 
-                <article class="xcard" data-card tabindex="0" aria-labelledby="card-2-title">
-                  <div class="xcard-main">
-                    <div class="xcard-media media-two" aria-hidden="true">
-                      <div class="mini-diff">
-                        <span class="d-line"></span>
-                        <span class="d-line d-old">City Library</span>
-                        <span class="d-line d-new">Town Hall</span>
-                        <span class="d-line short"></span>
-                      </div>
-                      <span class="chip" style="left: 60%; top: 14%"><span class="chip-dot" style="background: #b5dba0"></span>Venue</span>
-                    </div>
-                    <div class="collapse"><div><h3 class="xcard-title" id="card-2-title">See each edit<br />before it happens</h3></div></div>
+              <article class="bcard bcard-b">
+                <div class="bvis" aria-hidden="true">
+                  <div class="mini-diff">
+                    <span class="d-line"></span>
+                    <span class="d-line d-old">City Library</span>
+                    <span class="d-line d-new">Town Hall</span>
+                    <span class="d-line short"></span>
                   </div>
-                  <div class="collapse">
-                    <div>
-                      <div class="xcard-note">
-                        <span class="eyebrow">Keep it current</span>
-                        <p>Change a detail to see the old line and its replacement in each affected post. If you edited the post in Buffer, you choose whether to keep it or use the correction.</p>
-                      </div>
-                    </div>
-                  </div>
-                </article>
+                </div>
+                <div class="btext">
+                  <h3>See every fix before it goes out</h3>
+                  <p>Change a detail and Telly puts the old line next to the new one in each post. If you rewrote a post yourself, you decide which version stays.</p>
+                </div>
+              </article>
 
-                <article class="xcard" data-card tabindex="0" aria-labelledby="card-3-title">
-                  <div class="xcard-main">
-                    <div class="xcard-media media-three" aria-hidden="true">
-                      <span class="check-ring"><svg viewBox="0 0 24 24"><path d="m6 12.5 4 4 8-9" /></svg></span>
-                      <span class="chip" style="left: 10%; top: 12%"><span class="chip-dot" style="background: #e8796a"></span>Read back</span>
-                      <span class="chip" style="left: 46%; top: 82%"><span class="chip-dot" style="background: #b5dba0"></span>3 updated</span>
-                    </div>
-                    <div class="collapse"><div><h3 class="xcard-title" id="card-3-title">Checked again<br />in Buffer</h3></div></div>
-                  </div>
-                  <div class="collapse">
-                    <div>
-                      <div class="xcard-note">
-                        <span class="eyebrow">After every change</span>
-                        <p>After saving, Telly checks each post in Buffer. You'll see what changed and anything that still needs attention.</p>
-                      </div>
-                    </div>
-                  </div>
-                </article>
+              <article class="bcard bcard-c">
+                <span class="bmark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12.5 4 4 8-9" /></svg></span>
+                <div class="btext">
+                  <h3>Double-checked in Buffer</h3>
+                  <p>Once the fixes are saved, Telly reads each post back so you know they landed.</p>
+                </div>
+              </article>
 
-                <article class="xcard" data-card tabindex="0" aria-labelledby="card-4-title">
-                  <div class="xcard-main">
-                    <div class="xcard-media media-four" aria-hidden="true">
-                      <div class="mini-cancel">
-                        <span class="mc-row"><s>Announcement</s></span>
-                        <span class="mc-row"><s>Reminder</s></span>
-                        <span class="mc-row"><s>Day of</s></span>
-                      </div>
-                      <span class="chip" style="left: 12%; top: 80%"><span class="chip-dot" style="background: #e8796a"></span>Cancelled</span>
-                    </div>
-                    <div class="collapse"><div><h3 class="xcard-title" id="card-4-title">Called off?<br />Clear the queue</h3></div></div>
-                  </div>
-                  <div class="collapse">
-                    <div>
-                      <div class="xcard-note">
-                        <span class="eyebrow">When plans fall through</span>
-                        <p>Cancel the event and review the scheduled posts Telly will remove. For anything already published, it suggests a follow-up.</p>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              </div>
-
-              <div class="cards-nav">
-                <button type="button" class="round-btn" data-cards-prev aria-label="Previous card"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m10 3-5 5 5 5" /></svg></button>
-                <button type="button" class="round-btn" data-cards-next aria-label="Next card"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg></button>
-              </div>
+              <article class="bcard bcard-d">
+                <div class="mini-cancel" aria-hidden="true">
+                  <span class="mc-row"><s>Announcement</s></span>
+                  <span class="mc-row"><s>Reminder</s></span>
+                  <span class="mc-row"><s>Day of</s></span>
+                </div>
+                <div class="btext">
+                  <h3>Called off? Clear the queue</h3>
+                  <p>Cancel the event and Telly lines up the posts to remove. Nothing goes until you say so.</p>
+                </div>
+              </article>
             </div>
           </div>
         </section>
@@ -248,9 +152,8 @@
         <section class="how" id="how" aria-labelledby="how-title">
           <div class="how-inner">
             <div class="wrap section-head">
-              <div class="head-label"><h2 class="label" id="how-title">How it works</h2></div>
-              <div class="head-main"><p class="statement">Edit the event.<br />Review the changes.</p></div>
-              <div class="head-cta"><a class="text-cta" href="/demo">Try it in the demo</a></div>
+              <h2 class="kicker" id="how-title">How it works</h2>
+              <p class="headline">Edit the event.<br /><span class="dim">Approve the fixes.</span></p>
             </div>
 
             <div class="wrap how-grid" data-how>
@@ -320,34 +223,34 @@
                   <div class="step-pills"><span class="label">01</span><h3 class="label">Connect</h3></div>
                   <div class="step-body">
                     <span class="step-rail" aria-hidden="true"><span class="step-rail-fill" data-rail-fill></span></span>
-                    <p class="step-text">Sign in with Buffer. Buffer's own screen lists what Telly is asking for, and you approve it there.</p>
+                    <p class="step-text">Sign in through Buffer. Buffer shows you exactly what Telly can do, and you approve it there.</p>
                   </div>
-                  <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>You sign in on Buffer. Telly never sees your password.</p>
+                  <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>Telly never sees your Buffer password.</p>
                 </li>
                 <li class="how-step" data-step>
                   <div class="step-media" data-step-media aria-hidden="true"></div>
                   <div class="step-pills"><span class="label">02</span><h3 class="label">Tell</h3></div>
                   <div class="step-body">
                     <span class="step-rail" aria-hidden="true"><span class="step-rail-fill" data-rail-fill></span></span>
-                    <p class="step-text">Type the title, date, venue, price and booking link, or upload the flyer and check what Telly read from it.</p>
+                    <p class="step-text">Add the title, date, venue, price and booking link. Or upload the flyer and Telly fills them in for you to check.</p>
                   </div>
-                  <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>Check the details before you continue.</p>
+                  <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>Nothing moves on until the details look right.</p>
                 </li>
                 <li class="how-step" data-step>
                   <div class="step-media" data-step-media aria-hidden="true"></div>
                   <div class="step-pills"><span class="label">03</span><h3 class="label">Schedule</h3></div>
                   <div class="step-body">
                     <span class="step-rail" aria-hidden="true"><span class="step-rail-fill" data-rail-fill></span></span>
-                    <p class="step-text">Preview the announcement, reminder and day-of post. Press Listen to hear them, then schedule.</p>
+                    <p class="step-text">Read the announcement, reminder and day-of post, or press Listen to hear them. Then schedule all three.</p>
                   </div>
-                  <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>Posts go out on the event's local time, wherever you are.</p>
+                  <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>Times follow the event's own time zone, wherever you are.</p>
                 </li>
                 <li class="how-step" data-step>
                   <div class="step-media" data-step-media aria-hidden="true"></div>
                   <div class="step-pills"><span class="label">04</span><h3 class="label">Change</h3></div>
                   <div class="step-body">
                     <span class="step-rail" aria-hidden="true"><span class="step-rail-fill" data-rail-fill></span></span>
-                    <p class="step-text">When plans change, edit the event. Telly lists the corrections and asks first about any post you edited by hand.</p>
+                    <p class="step-text">Plans changed? Edit the event. Telly lists the fixes and asks you first about any post you rewrote by hand.</p>
                   </div>
                   <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>Nothing in Buffer changes until you say so.</p>
                 </li>
@@ -356,65 +259,24 @@
                   <div class="step-pills"><span class="label">05</span><h3 class="label">Confirm</h3></div>
                   <div class="step-body">
                     <span class="step-rail" aria-hidden="true"><span class="step-rail-fill" data-rail-fill></span></span>
-                    <p class="step-text">Approve the corrections. Telly saves them, checks the posts in Buffer and tells you what happened.</p>
+                    <p class="step-text">Approve the fixes. Telly saves them to Buffer, reads them back and tells you how it went.</p>
                   </div>
-                  <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>You'll see what saved and what still needs attention.</p>
+                  <p class="step-foot"><span class="foot-bar" aria-hidden="true"></span>If anything didn't save, you'll see it straight away.</p>
                 </li>
               </ol>
             </div>
           </div>
         </section>
 
-        <!-- Built on Buffer ------------------------------------------------------ -->
-        <section class="built" id="built" aria-labelledby="built-title">
-          <div class="wrap built-inner">
-            <span class="capsule" aria-hidden="true"><i></i></span>
-            <h2 class="label" id="built-title">Built on Buffer</h2>
-            <p class="statement center">You approve the changes.<br />Telly checks they saved in Buffer.</p>
-            <svg class="signature" viewBox="0 0 160 48" aria-hidden="true"><path d="M8 34c10-18 18-26 22-22s-8 22-4 24 14-20 20-18-2 16 2 16 10-14 16-14 0 12 6 12 12-16 20-16-4 14 2 14 14-10 24-12 18 2 26-2" /></svg>
-            <p class="byline"><b>Telly</b><span>Made for Buffer Commit 2026</span></p>
-
-            <div class="arch" aria-hidden="true">
-              <div class="arch-track">
-                <span class="arch-line"></span>
-                <span class="arch-stop" style="--x: 12%; --c: #e8a25c"><b>5 Dec</b><small>Announce</small></span>
-                <span class="arch-stop" style="--x: 50%; --c: #9fb6ff"><b>17 Dec</b><small>Remind</small></span>
-                <span class="arch-stop" style="--x: 88%; --c: #b5dba0"><b>19 Dec</b><small>Day of</small></span>
-                <span class="arch-runner"></span>
-              </div>
-              <ul class="api-chips" aria-label="Buffer API features Telly uses">
-                <li>OAuth 2.0 + PKCE</li>
-                <li>createPost</li>
-                <li>editPost</li>
-                <li>deletePost</li>
-                <li>post read-back</li>
-              </ul>
-            </div>
-
-            <div class="info-card">
-              <div class="info-avatars" aria-hidden="true"><span class="av av-1"></span><span class="av av-2"></span></div>
-              <p>Your Buffer connection stays in an encrypted cookie unless you turn on background checks. Telly saves campaign details to spot hand edits. You can delete your Telly data in the app.</p>
-              <a class="text-cta" href="/privacy.html">Read more</a>
-            </div>
-          </div>
-        </section>
-
         <!-- Closing + footer ----------------------------------------------------- -->
         <section class="closing" id="closing" aria-labelledby="closing-title">
-          <div class="closing-bg" aria-hidden="true"><span class="c1"></span><span class="c2"></span><span class="c3"></span><span class="grain"></span></div>
-
-          <div class="timeline timeline-closing" data-timeline data-labels="Reminder on time|#9fb6ff;Venue corrected|#e8a25c;Hand edit kept|#b5dba0;Checked in Buffer|#e8796a" aria-hidden="true">
-            <span class="timeline-line"></span>
-            <span class="timeline-dashes" data-dashes></span>
-            <span class="timeline-pill"><span class="timeline-pill-size" data-pill-size><i data-pill-dot></i><span data-pill-text>Reminder on time</span></span></span>
-          </div>
-
-          <div class="closing-copy">
-            <h2 class="display display-center" id="closing-title">Got an event coming up?</h2>
-            <p>Enter the event details and review your posts. If plans change later, come back to the event to review the corrections.</p>
-            <div class="cta-pair cta-center">
-              <a class="btn-pill" href="/auth/login">Connect Buffer</a>
-              <a class="text-cta text-cta-light" href="/demo">Try the demo first</a>
+          <div class="closing-panel">
+            <div class="closing-copy">
+              <h2 class="display" id="closing-title">Got an event<br /><span class="dim">coming up?</span></h2>
+              <div class="cta-pair cta-center">
+                <a class="btn-accent" href="/auth/login"><span>Connect Buffer</span><i aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M3.5 8.5 8.5 3.5M4.5 3.5h4v4" /></svg></i></a>
+                <a class="btn-glass" href="/demo">Try the demo</a>
+              </div>
             </div>
           </div>
 
@@ -438,9 +300,8 @@
                   <div>
                     <h3 class="footer-head">Learn</h3>
                     <a class="u-link" href="#why"><span>Why Telly</span></a>
-                    <a class="u-link" href="#difference"><span>The difference</span></a>
+                    <a class="u-link" href="#difference"><span>Features</span></a>
                     <a class="u-link" href="#how"><span>How it works</span></a>
-                    <a class="u-link" href="#built"><span>Built on Buffer</span></a>
                   </div>
                   <div>
                     <h3 class="footer-head">Legal</h3>
@@ -455,7 +316,6 @@
                 <a class="u-link to-top" href="#top"><span>Back to top</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10V2.5M2.5 6 6 2.5 9.5 6" /></svg></a>
               </div>
             </div>
-            <p class="footer-disclaimer">Telly is an independent app built on the Buffer API. It is not made or endorsed by Buffer. Telly schedules, edits and removes posts only through your connected Buffer account and only when you approve.</p>
           </footer>
         </section>
       </div>
@@ -547,6 +407,10 @@
               <legend>Post to</legend>
               <div id="channel-options" class="checks"></div>
             </fieldset>
+            <div id="page-field" class="field wide">
+              <label class="check"><input id="use-page" type="checkbox" checked> Link posts to an event page that always shows the latest details</label>
+              <p class="muted small-text">Posts that have already gone out can't be edited. With an event page, they still lead people to the right date and place, and visitors can add the event to a calendar that updates itself.</p>
+            </div>
             <div class="field wide actions">
               <button id="editor-submit" type="submit" class="primary">Preview campaign</button>
             </div>
@@ -562,6 +426,15 @@
               <div>
                 <label class="check"><input id="with-card" type="checkbox" checked> Add this event card to each post</label>
                 <p id="card-alt" class="muted small-text"></p>
+              </div>
+            </div>
+            <div id="flyer-choice" class="card-preview" hidden>
+              <img id="flyer-image" alt="" width="160" height="160">
+              <div class="flyer-choice-body">
+                <label class="check"><input id="use-flyer" type="checkbox"> Use your own flyer as the picture instead</label>
+                <label class="alt-label" for="flyer-alt">Description for people who can't see the image</label>
+                <textarea id="flyer-alt" rows="3" maxlength="1000"></textarea>
+                <p class="muted small-text">If a detail printed on the flyer changes later, Telly offers to swap it for the event card, so nobody sees an old date or venue.</p>
               </div>
             </div>
             <div id="preview-list" class="posts"></div>
@@ -593,6 +466,29 @@
               <span id="status-actions-label" class="status-label">Event status</span>
               <div id="status-actions" class="row"></div>
             </div>
+          </div>
+          <div id="campaign-tell" class="card side-card" hidden>
+            <h3 class="card-title">Tell Telly what changed</h3>
+            <p class="muted small-text">Say it the way you would to a friend. Telly fills in the new details and shows you every corrected post before anything changes.</p>
+            <form id="tell-form" class="tell-form">
+              <label class="sr-only" for="tell-text">What changed</label>
+              <textarea id="tell-text" rows="2" maxlength="1000" placeholder="We've moved to the Town Hall and now start at 7pm"></textarea>
+              <div class="row end"><button id="tell-submit" type="submit" class="small primary">Show the changes</button></div>
+            </form>
+          </div>
+          <div id="campaign-page" class="card side-card" hidden>
+            <h3 class="card-title">Event page</h3>
+            <p class="muted small-text">Your posts link here. It always shows the latest details, even for posts that have already gone out, and offers a calendar entry that updates itself.</p>
+            <p class="page-link"><a id="page-link" href="#" target="_blank" rel="noopener"></a></p>
+            <div class="row">
+              <button id="copy-page" type="button" class="small">Copy link</button>
+              <a id="open-page" class="button small" href="#" target="_blank" rel="noopener">Open the page</a>
+            </div>
+          </div>
+          <div id="campaign-repeat" class="card side-card">
+            <h3 class="card-title">Running it again?</h3>
+            <p class="muted small-text">Start a new campaign with these details filled in, a week later. Change the date before you preview.</p>
+            <div class="row"><button id="repeat-event" type="button" class="small">Repeat this event</button></div>
           </div>
           <div id="campaign-buffer" class="card side-card" hidden>
             <h3 class="card-title">Save to Buffer</h3>
@@ -659,19 +555,9 @@
               <button id="delete-data" type="button" class="link-danger" hidden>Delete my Telly data</button>
             </nav>
           </div>
-          <p class="app-footer-note">An independent app built on the Buffer API. Not made or endorsed by Buffer.</p>
         </footer>
       </div>
     </main>
-
-    <!-- Sticky card: bottom right over the hero, then up to the top right as you scroll. -->
-    <a id="sticky-cta" class="sticky-cta" href="/auth/login" hidden>
-      <span class="sticky-thumb" aria-hidden="true">
-        <svg viewBox="0 0 28 20"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
-      </span>
-      <span class="sticky-copy"><span>Telly for Buffer</span><small>Connect your Buffer account</small></span>
-      <span class="sticky-arrow" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m6 3 5 5-5 5" /></svg></span>
-    </a>
 
     <script src="/app.js" type="module"></script>
   </body>
