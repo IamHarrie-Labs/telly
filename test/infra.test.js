@@ -73,3 +73,15 @@ test('the logo opens the landing page, even for signed-in visitors', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.match(app, /params\.has\('home'\)/, 'the app shows the landing page for ?home');
 });
+
+test('signed-in visitors land on the landing page; the dashboard opens at /?app', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /!params\.has\('app'\)/, 'without ?app the app shows the landing page');
+  assert.match(app, /setAttribute\('href', '\/\?app'\)/, '"Open your dashboard" opens /?app');
+  const server = fs.readFileSync(new URL('../lib/app.js', import.meta.url), 'utf8');
+  assert.match(server, /'\/demo'[\s\S]*?res\.redirect\('\/\?app'\)/, 'the demo opens straight into the dashboard');
+  for (const file of ['privacy.html', 'terms.html', 'feedback.html']) {
+    const html = fs.readFileSync(new URL(`../public/${file}`, import.meta.url), 'utf8');
+    assert.match(html, /href="\/\?app">Back to Telly/, `${file}: Back to Telly opens the dashboard`);
+  }
+});

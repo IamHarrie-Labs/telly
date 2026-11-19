@@ -177,7 +177,7 @@ function setMode(mode) {
 // Connected visitors see "Open your dashboard" where Connect was, and the demo links are hidden.
 function pointLandingAtDashboard(demo) {
   const relabel = (link, label) => {
-    link.setAttribute('href', '/');
+    link.setAttribute('href', '/?app');
     if (!link.children.length) link.textContent = label;
     else {
       const span = link.querySelector('span:not([aria-hidden])');
@@ -1114,8 +1114,10 @@ async function init() {
     return;
   }
 
-  // The logo and Home link open the landing page even while signed in (or in the demo).
-  if (params.has('home')) {
+  // Everyone starts on the landing page, signed in or not. The dashboard opens at /?app,
+  // which "Open your dashboard", "Back to Telly" and the demo link lead to.
+  // The logo and Home link (/?home) keep opening the landing page.
+  if (params.has('home') || !params.has('app')) {
     setMode('landing');
     pointLandingAtDashboard(Boolean(session.demo));
     return;
