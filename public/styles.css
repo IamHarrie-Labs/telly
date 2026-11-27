@@ -890,6 +890,8 @@ body[data-mode='app']:has(#app-shell) .toasts { top: 16px; }
 .cal-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
 .cal-month { font-weight: 600; font-size: 1.25rem; letter-spacing: -0.02em; }
 .cal-nav { display: flex; gap: 6px; }
+.cal-sub { display: flex; align-items: center; gap: 6px; }
+.cal-sub .button { display: inline-flex; align-items: center; gap: 6px; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; }
 .cal-weekday { padding: 8px; background: var(--surface-2); font-size: 0.75rem; font-weight: 500; color: var(--muted); text-align: center; }
 .cal-cell { display: flex; flex-direction: column; gap: 4px; min-height: 104px; min-width: 0; padding: 6px; background: var(--surface); }

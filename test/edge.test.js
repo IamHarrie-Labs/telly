@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeFacts, planChange, printedChanged, publishAt, renderPost } from '../lib/campaign.js';
-import { changeLog, renderCalendar, renderEventPage } from '../lib/eventpage.js';
+import { changeLog, renderCalendar, renderEventPage, renderFeed } from '../lib/eventpage.js';
+import { feedUrl, readFeedToken } from '../lib/feed.js';
 
 const facts = normalizeFacts({
   title: 'Community Workshop', startsLocal: '2026-12-12T14:00', timeZone: 'Africa/Lagos',
@@ -93,4 +94,25 @@ test('the calendar file is valid, stable and folds long lines', () => {
   assert.match(ics, /DTSTART:20261212T130000Z/);
   assert.ok(ics.split('\r\n').every((line) => Buffer.byteLength(line) <= 75), 'no line longer than 75 octets');
   assert.match(renderCalendar({ ...campaign, facts: { ...campaign.facts, status: 'cancelled' } }, NOW), /STATUS:CANCELLED/);
+});
+
+test('one feed holds every event, each with the same id as its own calendar file', () => {
+  const other = { ...campaign, pageId: 'xyzXYZ6789', facts: { ...campaign.facts, status: 'cancelled' } };
+  const ics = renderFeed([campaign, other, { ...campaign, pageId: undefined }], NOW);
+  assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
+  assert.match(ics, /END:VCALENDAR\r\n$/);
+  assert.equal(ics.split('BEGIN:VEVENT').length - 1, 2, 'events without a page are left out');
+  assert.match(ics, /UID:abcDEF2345@/);
+  assert.match(ics, /UID:xyzXYZ6789@[\s\S]*STATUS:CANCELLED/);
+  assert.match(ics, /X-WR-CALNAME:Telly events/);
+  assert.equal(renderFeed([], NOW).split('BEGIN:VEVENT').length - 1, 0);
+});
+
+test('a feed address reads back only when its signature is right', () => {
+  const token = new URL(feedUrl('acct_123')).pathname.replace(/^\/cal\//, '').replace(/\.ics$/, '');
+  assert.equal(readFeedToken(token), 'acct_123');
+  const [data, sig] = token.split('.');
+  assert.equal(readFeedToken(`${Buffer.from('acct_999').toString('base64url')}.${sig}`), null, 'another account with the same signature');
+  assert.equal(readFeedToken(`${data}.${'A'.repeat(22)}`), null, 'a made-up signature');
+  assert.equal(readFeedToken('not-a-token'), null);
 });

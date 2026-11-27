@@ -59,6 +59,13 @@ const ics = await request(`${BASE}/e/${pageId}.ics`);
 const cal = await ics.text();
 ok(ics.status === 200 && /text\/calendar/.test(ics.headers.get('content-type')) && cal.includes(`UID:${pageId}@`) && cal.includes('SEQUENCE:1') && cal.includes('DTSTART:20261220T190000Z'), 'the calendar file has a stable id and the right start');
 ok((await request(`${BASE}/e/nosuchpage1`)).status === 404, 'an unknown event page is not found');
+const feed = await api('/api/campaigns/feed');
+ok(feed.status === 200 && feed.body.url.includes('/cal/') && feed.body.webcal.startsWith('webcal:'), 'the account has one calendar address for all its events');
+const feedPath = new URL(feed.body.url).pathname;
+const feedRes = await request(BASE + feedPath);
+const feedText = await feedRes.text();
+ok(feedRes.status === 200 && /text\/calendar/.test(feedRes.headers.get('content-type')) && feedText.includes(`UID:${pageId}@`), 'that calendar includes this event');
+ok((await request(BASE + feedPath.replace(/\.[A-Za-z0-9_-]{22}\.ics$/, `.${'A'.repeat(22)}.ics`))).status === 404, 'a calendar address with a wrong signature is not found');
 
 // A detail that isn't printed on the flyer leaves it in place; a printed one swaps in the card.
 const id = campaign.id;

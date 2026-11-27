@@ -757,6 +757,31 @@ function renderPagePanel(campaign) {
   $('open-page').href = url;
 }
 
+// One calendar with every event, for a calendar app to subscribe to. It updates as events change.
+async function loadFeed() {
+  const { url, webcal } = await api('/api/campaigns/feed');
+  state.feedUrl = url;
+  const link = $('cal-subscribe');
+  link.href = webcal;
+  link.replaceChildren(icon('calendar'), 'Subscribe');
+  link.hidden = false;
+  $('cal-copy').hidden = false;
+}
+
+$('cal-copy').addEventListener('click', async () => {
+  if (!state.feedUrl) return;
+  const button = $('cal-copy');
+  try {
+    await navigator.clipboard.writeText(state.feedUrl);
+    setIcon(button, 'check');
+    button.title = 'Copied';
+    showNotice('Calendar link copied. Paste it into your calendar app to subscribe.');
+  } catch {
+    showNotice('Your browser blocked copying. Use Subscribe instead.');
+  }
+  setTimeout(() => { setIcon(button, 'copy'); button.title = 'Copy calendar link'; }, 2000);
+});
+
 $('copy-page').addEventListener('click', async () => {
   const url = state.campaign?.facts.pageUrl;
   if (!url) return;
@@ -1290,6 +1315,7 @@ async function init() {
   } catch (error) {
     showError(error.message);
   }
+  loadFeed().catch(() => {});
   setMode('app');
   show(SCREENS.includes(wanted) ? wanted : 'view-campaigns');
   if (state.demo) noWatching('Checks while you are away need a Buffer connection. In the demo, Telly checks the practice queue while this page is open.', true);
