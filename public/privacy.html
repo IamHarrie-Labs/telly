@@ -28,7 +28,7 @@
       <div class="view-intro">
         <span class="label label-light">Privacy</span>
         <h1 class="view-title">What Telly stores about you</h1>
-        <p class="intro-text">Last updated 14 November 2026</p>
+        <p class="intro-text">Last updated 27 November 2026</p>
       </div>
 
       <article class="card doc-body">
@@ -36,12 +36,13 @@
         <p>Telly writes a set of social posts from your event details and schedules them through your Buffer account. When a detail changes, it shows you the corrections and applies only the ones you approve.</p>
 
         <h2>What Telly can access</h2>
-        <p>You choose this on Buffer's consent screen. Telly asks for four permissions: read your account and channels (<code>account:read</code>), read your posts (<code>posts:read</code>), create and edit posts (<code>posts:write</code>), and stay connected without asking you to sign in every hour (<code>offline_access</code>). It does not read analytics, comments or anything outside Buffer.</p>
+        <p>You choose this on Buffer's consent screen. Telly asks for six permissions: read your account and channels (<code>account:read</code>), read your posts (<code>posts:read</code>), create, edit and delete posts (<code>posts:write</code>), save ideas (<code>ideas:write</code>) and snippets (<code>snippets:write</code>) when you press the Save to Buffer buttons, and stay connected without asking you to sign in every hour (<code>offline_access</code>). It does not read analytics, comments or anything outside Buffer.</p>
 
         <h2>What Telly stores</h2>
         <ul>
           <li><strong>Your Buffer sign-in tokens</strong> stay in an encrypted cookie in your own browser. They are not saved in a database, unless you turn on watching (below).</li>
-          <li><strong>Each campaign</strong> is saved in a database: the event details you typed, your Buffer account ID, the IDs of the Buffer posts Telly created, and the text, times and event card Telly last wrote to them. Telly needs this to notice when a post was edited by hand.</li>
+          <li><strong>Each campaign</strong> is saved in a database: the event details you typed, your Buffer account ID, the IDs of the Buffer posts Telly created, and the text, times and event card Telly last wrote to them. Telly needs this to notice when a post was edited by hand. It also keeps a history of your changes. Other members of the same Buffer organization who use Telly can see and manage the campaign.</li>
+          <li><strong>Your own flyer</strong>, if you choose to attach it to your posts, is saved in the database with your account ID so Buffer can fetch it. Anyone with the image address can see it.</li>
           <li><strong>Request counts.</strong> To stop runaway scripts, Telly counts requests per minute from each internet address. It stores a scrambled, one-way version of the address, never the address itself, and clears the counts within minutes.</li>
           <li><strong>Error reports.</strong> If something breaks in the page or on the server, Telly records the error message and the page it happened on, so it can be fixed. These reports don't include your posts or event details.</li>
           <li><strong>Feedback</strong> you send through the feedback page is saved with your Buffer account ID, if you're signed in.</li>
@@ -54,6 +55,9 @@
         <h2>The demo</h2>
         <p>The demo works without a Buffer account. Its campaigns and practice posts are kept in the same database under a random demo ID, never reach Buffer or any social network, and are deleted after seven days.</p>
 
+        <h2>Event pages</h2>
+        <p>If you leave the event page option ticked, your posts link to a public page and calendar file showing the event's title, date, time, venue, address, price, booking link and status, with a short list of recent changes. Anyone with the link can see it, and it changes when you change the event.</p>
+
         <h2>The event card</h2>
         <p>If you leave "Add this event card" ticked, Telly draws a picture of the event's title, date, time, venue and price and attaches it to each post. The picture isn't stored anywhere: its web address carries those details, signed so only Telly can make one, and the image is drawn when Buffer or a reader opens it. Anyone with the address can see the card, just as anyone can see the post it's on.</p>
 
@@ -61,10 +65,13 @@
         <p>The Listen button uses your browser's built-in voice. Your browser handles the speech and the choice of voice. Telly does not receive the speech request.</p>
 
         <h2>Reading a flyer</h2>
-        <p>If you upload a flyer, Telly sends the image to Anthropic's Claude API to read the event details. Telly does not save the image. You can type the details instead if you'd rather not upload a flyer.</p>
+        <p>If you upload a flyer, Telly sends the image to Anthropic's Claude API to read the event details. Reading a flyer does not save the image; it is saved only if you choose to attach it to your posts. You can type the details instead if you'd rather not upload a flyer.</p>
+
+        <h2>Describing a change in your own words</h2>
+        <p>If you use <strong>Tell Telly what changed</strong>, Telly sends your message and the event's current details to Anthropic's Claude API, which proposes the updated details for you to check.</p>
 
         <h2>Deleting your data</h2>
-        <p>While connected, use <strong>Delete my Telly data</strong> at the bottom of the app to remove every campaign Telly saved for your account and turn off watching. <strong>Disconnect</strong> removes the sign-in cookie from your browser. Posts already scheduled in Buffer stay in Buffer; remove those there if you want them gone. You can also revoke Telly's access at any time from your Buffer account settings.</p>
+        <p>While connected, use <strong>Delete my Telly data</strong> at the bottom of the app to remove every campaign and flyer image Telly saved for your account, along with its event pages, and turn off watching. <strong>Disconnect</strong> removes the sign-in cookie from your browser. Posts already scheduled in Buffer stay in Buffer; remove those there if you want them gone. You can also revoke Telly's access at any time from your Buffer account settings.</p>
       </article>
 
       <footer class="app-footer">
