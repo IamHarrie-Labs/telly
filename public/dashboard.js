@@ -7,6 +7,7 @@ const $ = (id) => document.getElementById(id);
 const DAY = 86400000;
 const KIND = { announcement: 'Announcement', reminder: 'Reminder', dayOf: 'Day of', followUp: 'Follow-up' };
 const TONE = { announcement: 'lime', reminder: 'sky', dayOf: 'amber' };
+const STATUS_WORD = { soldOut: 'Sold out', postponed: 'Postponed', cancelled: 'Cancelled' };
 // Screens opened from a campaign keep "Campaigns" highlighted in the menu.
 const SECTION = { 'view-editor': 'view-list', 'view-campaign': 'view-list', 'view-review': 'view-list' };
 
@@ -217,10 +218,11 @@ function renderCalendar() {
       cell.append(add);
     }
     for (const campaign of events) {
-      const chip = button(`cal-event${isOff(campaign) ? ' is-off' : ''}`, () => data.open(campaign));
+      const status = STATUS_WORD[campaign.facts.status] || '';
+      const chip = button(`cal-event is-${campaign.facts.status || 'upcoming'}`, () => data.open(campaign));
       chip.textContent = campaign.facts.title;
-      chip.title = `${campaign.facts.title}, ${eventTime(campaign)}`;
-      chip.setAttribute('aria-label', `Open ${campaign.facts.title}, ${label}`);
+      chip.title = `${campaign.facts.title}, ${eventTime(campaign)}${status ? ` (${status.toLowerCase()})` : ''}`;
+      chip.setAttribute('aria-label', `Open ${campaign.facts.title}, ${label}${status ? `, ${status.toLowerCase()}` : ''}`);
       cell.append(chip);
     }
     for (const { campaign, post, due, channels } of sends.get(date) || []) {

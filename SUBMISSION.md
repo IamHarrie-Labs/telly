@@ -13,7 +13,7 @@ If you've promoted an event, you know this one. The venue moves or the start tim
 
 With Telly you enter the event once (title, date, time, venue, price, booking link) or upload the flyer and let Claude fill the form in for you to check. Telly writes an announcement, a reminder two days out and a post for the day, and schedules them in Buffer on the event's local time. Each post carries an image: a clean event card Telly draws from the details, or your own flyer, both with alt text. Each post also has a Listen button, which is a quick way to catch a clumsy sentence.
 
-When something changes, you edit the event, or just type it the way you'd say it ("moved to Friday at 8, same place") and Telly turns that into the edit for you to check. Telly fetches each scheduled post from Buffer and shows the old line crossed out above the new one. If the date moved, the posting times move with it, and the event card is redrawn. If you rewrote a post yourself in Buffer, Telly asks whether to keep your version or use the correction. Posts that already went out get suggested follow-up wording. Mark the event sold out or postponed and the posts say so; cancel it and whatever hasn't gone out is deleted. Every change is kept in a history, and a change that hasn't been posted yet can be undone.
+When something changes, you edit the event, or just type it the way you'd say it ("moved to Friday at 8, same place") and Telly turns that into the edit for you to check. Telly fetches each scheduled post from Buffer and shows the old line crossed out above the new one. If the date moved, the posting times move with it, and the event card is redrawn. If you rewrote a post yourself in Buffer, Telly asks whether to keep your version or use the correction. Posts that already went out get suggested follow-up wording. Mark the event sold out or postponed and the posts say so; cancel it and whatever hasn't gone out comes out of Buffer, kept on hold in case the event goes ahead after all. Every change is kept in a history, and a change that hasn't been posted yet can be undone.
 
 Telly fetches the posts again after every change, so when it says "2 updated · 1 needs review", that's what Buffer holds. The campaign list runs the same check whenever you open it. Turn on watching and Telly checks from time to time while you're away, then flags on your dashboard if a post failed to publish or the queue is paused.
 
@@ -31,5 +31,5 @@ No Buffer account? usetelly.xyz/demo runs the whole thing on a practice queue.
 4. 0:42–0:52: edit the reminder by hand in Buffer, as a real organiser would.
 5. 0:52–1:20: type "moved to Friday at 8, same place" into Tell Telly what changed. Show the review: two "Will update" posts and one "You edited this" post, and the new card. Choose Keep mine, then apply. Show Buffer updated.
 6. 1:20–1:35: open the event page from a post; it already shows Friday, with the calendar entry.
-7. 1:35–1:50: cancel the event. The posts that hadn't gone out are removed from Buffer.
+7. 1:35–1:50: cancel the event. The posts that hadn't gone out come out of Buffer and wait on hold.
 8. 1:50–2:00: "Telly. Tell it once. Keep it current."

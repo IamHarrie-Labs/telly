@@ -1015,7 +1015,7 @@ button.icon-btn[aria-busy='true']::after { display: none; }
 .cal-key li { display: flex; align-items: center; gap: 6px; }
 .cal-key-event { width: 18px; height: 10px; border-radius: 4px; background: var(--lime); }
 .cal-post-kind { flex: none; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: var(--ink); font-size: 0.625rem; font-weight: 600; line-height: 1; }
-#app-shell .cal-post { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 0; padding: 2px 6px 2px 2px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font-size: 0.6875rem; font-weight: 500; text-align: left; white-space: nowrap; overflow: hidden; }
+#app-shell .cal-post { display: flex; align-items: center; justify-content: flex-start; gap: 6px; width: fit-content; max-width: 100%; min-height: 0; padding: 2px 6px 2px 2px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font-size: 0.6875rem; font-weight: 500; text-align: left; white-space: nowrap; overflow: hidden; }
 #app-shell .cal-post:hover { border-color: var(--ink); }
 .cal-post-time { overflow: hidden; text-overflow: ellipsis; }
 #app-shell .cal-post.is-sent { opacity: 0.55; }
@@ -1038,4 +1038,23 @@ button.icon-btn[aria-busy='true']::after { display: none; }
 @media (hover: none) { #app-shell .cal-add { opacity: 0.5; } }
 @media (max-width: 640px) {
   #app-shell .cal-add { top: 2px; right: 2px; width: 18px; height: 18px; font-size: 0.75rem; border: 0; }
+}
+
+/* ---- Calendar: event status on the chip --------------------------------------------- */
+/* Shapes, not post colours, so a status never reads as an A / R / D marker. */
+#app-shell .cal-event.is-soldOut { background: var(--ink); color: var(--lime); }
+#app-shell .cal-event.is-postponed { background: var(--surface); border: 1.5px dashed var(--ink); padding: 3.5px 6.5px; font-style: italic; }
+#app-shell .cal-event.is-cancelled { background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); text-decoration: line-through; }
+#app-shell .cal-event.is-soldOut:hover { background: var(--olive); color: #fff; }
+#app-shell .cal-event.is-postponed:hover, #app-shell .cal-event.is-cancelled:hover { background: var(--ink); border-color: var(--ink); color: #fff; }
+#app-shell .is-other .cal-event.is-soldOut { background: var(--lime); color: var(--ink); }
+.cal-key-event.is-soldOut { background: var(--ink); }
+.cal-key-event.is-postponed { background: var(--surface); border: 1.5px dashed var(--ink); }
+.cal-key-event.is-cancelled { background: var(--surface-2); border: 1px solid var(--line); }
+.cal-key-sep { width: 1px; height: 14px; background: var(--line); }
+@media (max-width: 640px) {
+  #app-shell .cal-event.is-soldOut { background: var(--ink); }
+  #app-shell .cal-event.is-postponed { background: transparent; border: 1.5px dashed var(--ink); padding: 0; }
+  #app-shell .cal-event.is-cancelled { background: var(--line); border: 0; }
+  .cal-key-sep { display: none; }
 }

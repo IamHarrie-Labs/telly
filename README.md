@@ -29,7 +29,8 @@ Change a detail once. Telly reads each post back from Buffer, shows what would c
 - **Three posts from one event:** an announcement, a reminder and a day-of post, timed in the event's own time zone.
 - **A picture with alt text:** an event card drawn from the details, or your own flyer.
 - **Changes in plain words:** type "moved to Friday at 8, same place" and check the edit Telly proposes.
-- **Event status:** sold out, postponed or cancelled. Cancelling takes unpublished posts out of the queue.
+- **Event status:** sold out, postponed or cancelled. Cancelling takes unpublished posts out of Buffer and keeps them on hold, so "It's back on" puts them straight back.
+- **A calendar of the whole plan:** each event, plus a marker on the day every post goes out. Click any day to start an event on it.
 - **Posts already sent:** Telly suggests follow-up wording.
 - **History and undo** for changes that haven't gone out.
 - **An event page** that always shows the latest details, with a calendar entry that updates itself.
@@ -37,6 +38,8 @@ Change a detail once. Telly reads each post back from Buffer, shows what would c
 - **Team use:** campaigns are shared within a Buffer organization.
 - **Save to Buffer:** posts as ideas, and details as a snippet on Buffer plans that include snippets.
 - **Repeat events** and a **Listen** button to hear a post before it goes out.
+
+![The calendar for December: an Open Mic Night chip on the 10th with its day-of post at 8am, the reminder at 9am on the 8th, and a key for event status and post types.](docs/calendar.png)
 
 ## How it works
 
