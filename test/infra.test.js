@@ -16,9 +16,11 @@ const { MIGRATIONS } = await import('../lib/store.js');
 const { SECURITY_HEADERS } = await import('../lib/app.js');
 
 test('stored tokens round-trip through encryption', () => {
-  const tokens = { accessToken: 'at', refreshToken: 'rt', expiresAt: 123 };
+  // Long, distinctive values: a two-letter token can turn up by chance in random ciphertext.
+  const tokens = { accessToken: 'access-token-plain-1234', refreshToken: 'refresh-token-plain-5678', expiresAt: 123 };
   const sealed = seal(tokens);
-  assert.ok(!sealed.includes('rt'), 'the refresh token is not readable in storage');
+  assert.ok(!sealed.includes('refresh-token-plain'), 'the refresh token is not readable in storage');
+  assert.ok(!sealed.includes('access-token-plain'), 'nor the access token');
   assert.deepEqual(open(sealed), tokens);
   assert.notEqual(seal(tokens), sealed, 'each seal uses a fresh IV');
 });
