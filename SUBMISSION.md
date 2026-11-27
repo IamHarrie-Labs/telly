@@ -17,7 +17,7 @@ When something changes, you edit the event, or just type it the way you'd say it
 
 Telly fetches the posts again after every change, so when it says "2 updated · 1 needs review", that's what Buffer holds. The campaign list runs the same check whenever you open it. Turn on watching and Telly emails you if a post fails to publish or the queue is paused.
 
-The posts link to an event page that always shows the latest details, even for posts that went out last week, with a calendar entry that updates itself when the event moves. Running it again? Repeat the event and start from a copy a week later. Campaigns are shared with everyone in your Buffer organization, and the details and wording can be saved to Buffer as a snippet and ideas for posts Telly doesn't schedule.
+The posts link to an event page that always shows the latest details, even for posts that went out last week, with a calendar entry that updates itself when the event moves. Running it again? Repeat the event and start from a copy a week later. Campaigns are shared with everyone in your Buffer organization, and the wording can be saved to Buffer as ideas for posts Telly doesn't schedule (and the details as a snippet, on Buffer plans that include snippets).
 
 No Buffer account? usetelly.xyz/demo runs the whole thing on a practice queue.
 
