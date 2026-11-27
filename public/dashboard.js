@@ -1,6 +1,8 @@
 // The signed-in app around the campaigns: the side menu and the Dashboard, Scheduled posts,
 // Calendar, Watching and Feedback screens. Everything shown comes from the saved campaigns.
 
+import { chosenName, greeting, greetingName, rememberProfile, renderProfile } from '/profile.js';
+
 const $ = (id) => document.getElementById(id);
 const DAY = 86400000;
 const KIND = { announcement: 'Announcement', reminder: 'Reminder', dayOf: 'Day of', followUp: 'Follow-up' };
@@ -177,25 +179,30 @@ function renderCalendar() {
   const heading = format(month, { timeZone: 'UTC', month: 'long', year: 'numeric' });
   $('cal-month').textContent = heading;
   const cells = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => node('span', 'cal-weekday', d));
-  for (let i = 0; i < (month.getUTCDay() + 6) % 7; i++) cells.push(node('span', 'cal-cell is-blank'));
   const length = new Date(Date.UTC(year, m + 1, 0)).getUTCDate();
+  // Whole weeks, Monday to Sunday: the first and last rows run into the months either side.
+  const lead = (month.getUTCDay() + 6) % 7;
+  const total = Math.ceil((lead + length) / 7) * 7;
   const inMonth = [];
-  for (let day = 1; day <= length; day++) {
-    const date = new Date(month.getTime() + (day - 1) * DAY).toISOString().slice(0, 10);
+  for (let i = 0; i < total; i++) {
+    const at = new Date(month.getTime() + (i - lead) * DAY);
+    const date = at.toISOString().slice(0, 10);
+    const other = at.getUTCMonth() !== m;
+    const label = format(at, { timeZone: 'UTC', day: 'numeric', month: 'long' });
     const events = data.campaigns.filter((c) => eventDate(c) === date).sort((a, b) => a.facts.startsLocal.localeCompare(b.facts.startsLocal));
-    inMonth.push(...events);
-    const cell = node('div', `cal-cell${date === today ? ' is-today' : ''}`);
-    cell.append(node('span', 'cal-number', day));
+    if (!other) inMonth.push(...events);
+    const cell = node('div', `cal-cell${other ? ' is-other' : ''}${date === today ? ' is-today' : ''}`);
+    // Days from the months either side show their month too, so "1" can't be misread.
+    cell.append(node('span', 'cal-number', other && at.getUTCDate() === 1 ? format(at, { timeZone: 'UTC', day: 'numeric', month: 'short' }) : at.getUTCDate()));
     for (const campaign of events) {
       const chip = button(`cal-event${isOff(campaign) ? ' is-off' : ''}`, () => data.open(campaign));
       chip.textContent = campaign.facts.title;
       chip.title = `${campaign.facts.title}, ${eventTime(campaign)}`;
-      chip.setAttribute('aria-label', `Open ${campaign.facts.title}, ${day} ${heading}`);
+      chip.setAttribute('aria-label', `Open ${campaign.facts.title}, ${label}`);
       cell.append(chip);
     }
     cells.push(cell);
   }
-  while ((cells.length - 7) % 7) cells.push(node('span', 'cal-cell is-blank'));
   $('cal-grid').replaceChildren(...cells);
   $('cal-agenda-title').textContent = `Events in ${heading}`;
   $('cal-agenda').replaceChildren(...(inMonth.length ? inMonth.map(eventRow) : [emptyLine('No events this month.')]));
@@ -313,12 +320,25 @@ function setupFeedback() {
   });
 }
 
-export function startDashboard({ demo, name, go }) {
-  const full = String(name || '').trim();
-  const first = full.includes('@') ? '' : full.split(/\s+/)[0];
-  $('campaigns-title').textContent = demo ? 'Your dashboard' : first ? `Welcome back, ${first}` : 'Welcome back';
-  $('side-name').textContent = demo ? 'Demo workspace' : full || 'Your account';
-  $('side-initial').textContent = (demo ? 'D' : full[0] || 'T').toUpperCase();
+let me = { demo: false, account: {}, org: '', avatar: '' };
+
+/** The greeting and the sidebar's account block, from the account and any name chosen in Settings. */
+export function showProfile(changes = {}) {
+  me = { ...me, ...changes };
+  const { demo, account, org, avatar } = me;
+  if (demo) {
+    $('campaigns-title').textContent = 'Your dashboard';
+    renderProfile({ name: 'Demo workspace', org: 'Practice queue' });
+    return;
+  }
+  const chosen = chosenName(account.id);
+  $('campaigns-title').textContent = greeting(greetingName(account.name, chosen));
+  renderProfile({ name: chosen || account.name || account.email || 'Your account', org, avatar });
+  if (account.id) rememberProfile({ accountId: account.id, org, avatar });
+}
+
+export function startDashboard({ demo, account, go }) {
+  showProfile({ demo, account: account || {}, org: account?.organizations?.[0]?.name || '' });
   if (demo) {
     const link = $('dash-buffer');
     link.href = '/auth/login';

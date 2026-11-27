@@ -2,7 +2,11 @@
 // textContent (via el()), never as HTML.
 
 import { startLanding } from '/landing.js';
-import { markScreen, renderDashboard, resetDashboard, setAttention, setHealth, startDashboard } from '/dashboard.js';
+import { markScreen, renderDashboard, resetDashboard, setAttention, setHealth, showProfile, startDashboard } from '/dashboard.js';
+import { chosenName, saveChosenName } from '/profile.js';
+import { drawIcons, icon, setIcon } from '/icons.js';
+
+drawIcons();
 
 // Report unexpected errors in this page to the server (a few per visit at most), so problems
 // people hit show up in Telly's alerts instead of going unnoticed.
@@ -248,20 +252,23 @@ let speakingButton = null;
 
 function listenButton(getText) {
   if (!canSpeak) return null;
-  const button = el('button', { type: 'button', class: 'small', 'aria-pressed': 'false' }, 'Listen');
+  const button = el('button', { type: 'button', class: 'small icon-btn', 'aria-pressed': 'false', 'aria-label': 'Listen', title: 'Listen' }, icon('speaker'));
+  const quiet = (b) => { setIcon(b, 'speaker'); b.setAttribute('aria-label', 'Listen'); b.title = 'Listen'; b.setAttribute('aria-pressed', 'false'); };
   button.addEventListener('click', () => {
     const wasThis = speakingButton === button;
     speechSynthesis.cancel();
-    if (speakingButton) { speakingButton.textContent = 'Listen'; speakingButton.setAttribute('aria-pressed', 'false'); }
+    if (speakingButton) quiet(speakingButton);
     speakingButton = null;
     if (wasThis) return;
     const utterance = new SpeechSynthesisUtterance(getText());
     utterance.lang = 'en-GB';
     utterance.onend = utterance.onerror = () => {
-      if (speakingButton === button) { button.textContent = 'Listen'; button.setAttribute('aria-pressed', 'false'); speakingButton = null; }
+      if (speakingButton === button) { quiet(button); speakingButton = null; }
     };
     speakingButton = button;
-    button.textContent = 'Stop';
+    setIcon(button, 'stop');
+    button.setAttribute('aria-label', 'Stop');
+    button.title = 'Stop';
     button.setAttribute('aria-pressed', 'true');
     speechSynthesis.speak(utterance);
   });
@@ -405,7 +412,7 @@ function openEditor(mode, { status, title, help, prefill } = {}) {
   $('preview').hidden = true;
   if (mode === 'new') {
     $('editor-title').textContent = 'Confirm the details';
-    $('editor-help').textContent = 'Check these details before you preview the posts. You can update the event later if plans change.';
+    $('editor-help').textContent = 'Check the details. You can change them later.';
     $('editor-submit').textContent = 'Preview campaign';
     $('channel-field').hidden = false;
     $('page-field').hidden = false;
@@ -417,7 +424,7 @@ function openEditor(mode, { status, title, help, prefill } = {}) {
     show('view-editor', backToScreen);
   } else {
     $('editor-title').textContent = title || 'Change a detail';
-    $('editor-help').textContent = help || 'Edit what changed. Telly shows every affected post before anything in Buffer changes.';
+    $('editor-help').textContent = help || 'Edit what changed. You see every affected post first.';
     $('editor-submit').textContent = 'Review changes';
     $('channel-field').hidden = true;
     $('page-field').hidden = true;
@@ -583,7 +590,7 @@ function renderPreview(items, facts, card) {
   const where = state.demo ? 'the practice queue' : 'Buffer';
   const updateCount = () => {
     const count = items.filter((i) => !i.skip && !state.edits[`${i.channelId}:${i.kind}`]?.skip).length;
-    $('schedule').textContent = count === 1 ? `Schedule 1 post in ${where}` : `Schedule ${count} posts in ${where}`;
+    $('schedule').replaceChildren(icon('calendar'), count === 1 ? `Schedule 1 post in ${where}` : `Schedule ${count} posts in ${where}`);
     $('schedule').hidden = count === 0;
   };
   for (const item of items) list.append(item.skip && !item.dueAt ? postCard({ meta: KIND[item.kind], text: '', note: item.skip }) : editablePost(item, facts, updateCount));
@@ -745,13 +752,16 @@ function renderPagePanel(campaign) {
 $('copy-page').addEventListener('click', async () => {
   const url = state.campaign?.facts.pageUrl;
   if (!url) return;
+  const button = $('copy-page');
   try {
     await navigator.clipboard.writeText(url);
-    $('copy-page').textContent = 'Copied';
+    setIcon(button, 'check');
+    button.title = 'Copied';
+    showNotice('Link copied.');
   } catch {
-    $('copy-page').textContent = 'Select the link to copy it';
+    showNotice('Select the link to copy it.');
   }
-  setTimeout(() => { $('copy-page').textContent = 'Copy link'; }, 2000);
+  setTimeout(() => { setIcon(button, 'copy'); button.title = 'Copy link'; }, 2000);
 });
 
 $('tell-form').addEventListener('submit', (event) => {
@@ -777,7 +787,7 @@ function weekLater(startsLocal) {
 $('repeat-event').addEventListener('click', () => {
   const { facts } = state.campaign;
   openEditor('new', { prefill: { ...facts, startsLocal: weekLater(facts.startsLocal) } });
-  $('editor-help').textContent = 'The details are copied from your last event, a week later. Check the date and anything else that differs, then preview.';
+  $('editor-help').textContent = 'Copied from your last event, a week later. Check the date.';
   $('f-starts').focus();
 });
 
@@ -831,22 +841,22 @@ function renderCampaignPosts(campaign, live) {
 // The status buttons depend on where the event stands now.
 function renderStatusActions(campaign) {
   const { status } = campaign.facts;
-  const go = (label, next, primary = false) => {
-    const button = el('button', { type: 'button', class: primary ? 'primary' : '' }, label);
+  const go = (label, next, glyph, primary = false) => {
+    const button = el('button', { type: 'button', class: primary ? 'primary with-icon' : 'with-icon' }, icon(glyph), label);
     button.addEventListener('click', () => busy(button, () => reviewChange({ ...state.campaign.facts, status: next })));
     return button;
   };
-  const newDate = el('button', { type: 'button', class: 'primary' }, 'Set the new date');
+  const newDate = el('button', { type: 'button', class: 'primary with-icon' }, icon('calendar'), 'Set the new date');
   newDate.addEventListener('click', () => openEditor('change', {
     status: 'upcoming',
     title: 'Set the new date',
     help: 'Enter the new date and time. Telly brings the posts it put on hold back into Buffer with the new details, and shows you each one first.',
   }));
   const buttons = {
-    upcoming: [go('Mark sold out', 'soldOut'), go('Postpone', 'postponed'), go('Cancel event', 'cancelled')],
-    soldOut: [go('Tickets available again', 'upcoming'), go('Postpone', 'postponed'), go('Cancel event', 'cancelled')],
-    postponed: [newDate, go('Cancel event', 'cancelled')],
-    cancelled: [go("It's back on", 'upcoming', true)],
+    upcoming: [go('Sold out', 'soldOut', 'ticket'), go('Postpone', 'postponed', 'pause'), go('Cancel', 'cancelled', 'cancel')],
+    soldOut: [go('Tickets back', 'upcoming', 'ticket'), go('Postpone', 'postponed', 'pause'), go('Cancel', 'cancelled', 'cancel')],
+    postponed: [newDate, go('Cancel', 'cancelled', 'cancel')],
+    cancelled: [go("It's back on", 'upcoming', 'play', true)],
   }[status] || [];
   $('status-actions').replaceChildren(...buttons);
 }
@@ -882,7 +892,7 @@ function renderHistory(campaign) {
       el('span', { class: 'history-what' }, describeEntry(entry)),
       el('span', { class: 'muted small-text' }, entry.undoneBy ? `${meta} · undone` : meta));
     if (campaign.undo === entry.id) {
-      const undo = el('button', { type: 'button', class: 'small' }, 'Undo');
+      const undo = el('button', { type: 'button', class: 'small with-icon' }, icon('undo'), 'Undo');
       undo.addEventListener('click', () => busy(undo, () => reviewUndo(entry.id)));
       row.append(undo);
     }
@@ -905,7 +915,7 @@ function renderBufferPanel(campaign) {
   if (campaign.snippet?.id) notes.push(`Details saved as a snippet in ${where}. Telly updates it when the details change.`);
   if (campaign.ideas?.length) notes.push(`${campaign.ideas.length} idea${campaign.ideas.length === 1 ? '' : 's'} saved to ${where}.`);
   $('buffer-saved').textContent = notes.join(' ');
-  $('save-snippet').textContent = campaign.snippet?.id ? 'Update the snippet' : 'Save details as a snippet';
+  $('save-snippet').querySelector('.btn-text').textContent = campaign.snippet?.id ? 'Update snippet' : 'Save snippet';
 }
 
 const bufferOrg = () => state.campaign.organizationId || state.orgId;
@@ -1141,7 +1151,8 @@ function updateApply(plan = lastPlan) {
   ].filter(Boolean);
   const button = $('apply');
   button.hidden = parts.length === 0;
-  button.textContent = state.undo ? 'Undo' : removing && !changing && !holding && !restoring ? `Remove ${posts(removing)}` : 'Apply';
+  const removeOnly = removing && !changing && !holding && !restoring;
+  button.replaceChildren(icon(state.undo ? 'undo' : removeOnly ? 'trash' : 'check'), state.undo ? 'Undo' : removeOnly ? `Remove ${posts(removing)}` : 'Apply');
   $('review-summary').textContent = parts.length === 0
     ? `Nothing to send to ${where}.`
     : `Telly will ${parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]}${waiting ? `, and leave ${posts(waiting)} for you` : ''}.`;
@@ -1175,6 +1186,9 @@ for (const button of document.querySelectorAll('[data-back]')) {
 
 async function loadChannels() {
   state.channels = (await api(`/api/channels?organizationId=${encodeURIComponent(state.orgId)}`)).channels;
+  // The sidebar shows the first connected channel's picture and the organization's name.
+  const pictured = state.channels.find((c) => c.avatar && !c.isDisconnected);
+  showProfile({ org: state.orgs.find((o) => o.id === state.orgId)?.name || '', avatar: pictured?.avatar || '' });
 }
 
 async function init() {
@@ -1216,10 +1230,9 @@ async function init() {
   state.demo = Boolean(session.demo);
   $('demo-connect').hidden = !state.demo;
   $('demo-note').hidden = !state.demo;
-  $('logout').textContent = state.demo ? 'Leave demo' : 'Disconnect';
-  $('account-line').textContent = state.demo
-    ? 'You are in the demo workspace. Connect Buffer to schedule real posts.'
-    : `Connected to Buffer as ${session.account.name || session.account.email}.`;
+  const leave = state.demo ? 'Leave demo' : 'Disconnect Buffer';
+  $('logout').setAttribute('aria-label', leave);
+  $('logout').title = leave;
   const select = $('org');
   select.append(...session.account.organizations.map((o) => el('option', { value: o.id }, o.name)));
   $('org-field').hidden = session.account.organizations.length < 2;
@@ -1242,13 +1255,28 @@ async function init() {
     });
   });
 
-  $('logout').addEventListener('click', async () => {
+  const signOut = async () => {
     await api('/auth/logout', { method: 'POST' });
     location.assign('/');
+  };
+  $('logout').addEventListener('click', signOut);
+  $('side-signout').addEventListener('click', signOut);
+  $('side-signout').setAttribute('aria-label', state.demo ? 'Leave demo' : 'Sign out');
+  $('side-signout').title = state.demo ? 'Leave demo' : 'Sign out';
+
+  // What Telly calls you, kept in this browser.
+  $('name-form').hidden = state.demo;
+  $('display-name').value = chosenName(session.account.id);
+  $('name-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    saveChosenName(session.account.id, $('display-name').value);
+    $('display-name').value = chosenName(session.account.id);
+    showProfile();
+    showNotice($('display-name').value ? `Telly will call you ${$('display-name').value}.` : 'Telly will use your Buffer name.');
   });
 
   const wanted = `view-${location.hash.slice(1)}`;
-  startDashboard({ demo: state.demo, name: session.account.name, go: (view) => { showError(''); show(view); } });
+  startDashboard({ demo: state.demo, account: session.account, go: (view) => { showError(''); show(view); } });
   try {
     await Promise.all([loadChannels(), loadCampaigns()]);
   } catch (error) {
