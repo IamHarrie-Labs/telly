@@ -3,6 +3,7 @@
   "framework": null,
   "buildCommand": "",
   "outputDirectory": "public",
+  "cleanUrls": true,
   "redirects": [
     { "source": "/(.*)", "has": [{ "type": "host", "value": "telly-self.vercel.app" }], "destination": "https://usetelly.xyz/$1", "permanent": true },
     { "source": "/(.*)", "has": [{ "type": "host", "value": "www.usetelly.xyz" }], "destination": "https://usetelly.xyz/$1", "permanent": true }

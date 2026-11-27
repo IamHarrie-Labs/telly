@@ -82,6 +82,7 @@ test('signed-in visitors land on the landing page; the dashboard opens at /?app'
   assert.match(server, /'\/demo'[\s\S]*?res\.redirect\('\/\?app'\)/, 'the demo opens straight into the dashboard');
   for (const file of ['privacy.html', 'terms.html', 'feedback.html']) {
     const html = fs.readFileSync(new URL(`../public/${file}`, import.meta.url), 'utf8');
-    assert.match(html, /href="\/\?app">Back to Telly/, `${file}: Back to Telly opens the dashboard`);
+    assert.match(html, /href="\/\?app"[^>]*>[\s\S]*?Dashboard/, `${file}: the menu opens the dashboard`);
+    assert.doesNotMatch(html, /href="\/[a-z]+\.html"/, `${file}: links have no .html`);
   }
 });

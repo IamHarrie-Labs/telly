@@ -72,7 +72,7 @@ The queries are in [`lib/queries.js`](lib/queries.js) and the client in [`lib/bu
 - Sign-in tokens live in an encrypted cookie. If you turn watching on, they are stored encrypted (AES-256-GCM) in the database so checks can run while you're away, and removed when you turn it off.
 - Event card addresses are signed, so nobody can use Telly to draw arbitrary images.
 - A strict Content Security Policy, and no analytics or tracking cookies.
-- One button deletes your Telly data. Posts already in Buffer stay there. See the [privacy page](https://usetelly.xyz/privacy.html).
+- One button deletes your Telly data. Posts already in Buffer stay there. See the [privacy page](https://usetelly.xyz/privacy).
 
 ## Run it locally
 

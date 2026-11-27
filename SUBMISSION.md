@@ -1,7 +1,7 @@
 # Telly: submission draft
 
 **App:** https://usetelly.xyz
-**Privacy:** https://usetelly.xyz/privacy.html
+**Privacy:** https://usetelly.xyz/privacy
 **Code:** https://github.com/IamHarrie-Labs/telly
 **Client ID:** paste from Buffer → Settings → API → App Clients (it is public, but keep the secret out of here)
 
