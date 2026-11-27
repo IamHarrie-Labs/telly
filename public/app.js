@@ -306,7 +306,7 @@ function emptyCard() {
 function renderCampaigns() {
   const list = $('campaign-list');
   list.replaceChildren();
-  const overview = () => renderDashboard({ campaigns: state.campaigns, open: openCampaign, create: () => openEditor('new'), channel: channelName });
+  const overview = () => renderDashboard({ campaigns: state.campaigns, open: openCampaign, create: startOn, channel: channelName });
   setAttention(0);
   if (!state.campaigns.length) {
     list.append(emptyCard());
@@ -402,6 +402,14 @@ function renderChannelOptions() {
       el('input', { type: 'checkbox', name: 'channel', value: channel.id, checked: usable.length === 1 }),
       channelName(channel.id)));
   }
+}
+
+// A new campaign, optionally on a day picked from the calendar (6 pm, the usual start; easy to change).
+function startOn(date) {
+  if (!date) return openEditor('new');
+  openEditor('new', { prefill: { startsLocal: `${date}T18:00` } });
+  const day = new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(`${date}T12:00:00`));
+  $('editor-help').textContent = `Starting on ${day}. Check the time.`;
 }
 
 function openEditor(mode, { status, title, help, prefill } = {}) {

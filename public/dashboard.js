@@ -208,6 +208,14 @@ function renderCalendar() {
     const cell = node('div', `cal-cell${other ? ' is-other' : ''}${date === today ? ' is-today' : ''}`);
     // Days from the months either side show their month too, so "1" can't be misread.
     cell.append(node('span', 'cal-number', other && at.getUTCDate() === 1 ? format(at, { timeZone: 'UTC', day: 'numeric', month: 'short' }) : at.getUTCDate()));
+    // From today on, any day can start a new event on that date.
+    if (date >= today) {
+      const add = button('cal-add', () => data.create(date));
+      add.textContent = '+';
+      add.title = `New event on ${label}`;
+      add.setAttribute('aria-label', `New event on ${label}`);
+      cell.append(add);
+    }
     for (const campaign of events) {
       const chip = button(`cal-event${isOff(campaign) ? ' is-off' : ''}`, () => data.open(campaign));
       chip.textContent = campaign.facts.title;
