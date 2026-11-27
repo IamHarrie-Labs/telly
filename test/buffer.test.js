@@ -42,3 +42,18 @@ test('state comparison rejects mismatches and missing values', () => {
   assert.equal(safeEqual(undefined, 'abc'), false);
   assert.equal(safeEqual(undefined, undefined), false);
 });
+
+test('a partial read where every post is gone reports not-found errors instead of throwing', async (t) => {
+  const { gql } = await import('../lib/buffer.js');
+  const { fetchCurrent } = await import('../lib/routes-campaigns.js');
+  const realFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = realFetch; });
+  // What Buffer now sends when the only post asked about was deleted.
+  globalThis.fetch = async () => new Response(JSON.stringify({ data: null, errors: [{ message: 'Post not found for id: abc', path: ['p0'] }] }), { status: 200 });
+  const session = { tokens: { accessToken: 'x', expiresAt: Date.now() + 60_000 }, save: async () => {} };
+  const { data, errors } = await gql(session, 'query { p0: post(input: {id: "abc"}) { id } }', {}, { partial: true });
+  assert.deepEqual(data, {});
+  assert.equal(errors.length, 1);
+  const current = await fetchCurrent(session, [{ postId: 'abc' }]);
+  assert.equal(current.size, 0, 'a deleted post reads back as gone, not as a failure');
+});
