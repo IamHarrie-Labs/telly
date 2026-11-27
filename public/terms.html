@@ -4,31 +4,31 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Telly terms</title>
-    <meta name="theme-color" content="#615e50" />
+    <meta name="theme-color" content="#1a1915" />
     <link rel="stylesheet" href="/styles.css" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
   </head>
-  <body data-mode="app">
-    <header class="site-header">
-      <div class="header-bar">
-        <a href="/?home" class="wordmark" aria-label="Telly home page">
-          <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
-          <span>Telly</span>
-        </a>
-        <nav class="header-nav" aria-label="Main navigation">
-          <ul><li><a class="nav-link nav-cta" href="/?app">Back to Telly</a></li></ul>
-        </nav>
-      </div>
+  <body data-mode="app" class="doc-page">
+    <header class="page-bar">
+      <a href="/?home" class="wordmark" aria-label="Telly home page">
+        <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
+        <span>Telly</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html" aria-current="page">Terms</a>
+        <a href="/feedback.html">Feedback</a>
+        <a class="page-open" href="/?app">Back to Telly</a>
+      </nav>
     </header>
 
-    <main class="app-shell doc" id="main">
-      <div class="view-intro">
-        <span class="label label-light">Terms</span>
-        <h1 class="view-title">Terms of use</h1>
-        <p class="intro-text">Last updated 14 November 2026</p>
+    <main class="page-main" id="main">
+      <div class="page-intro">
+        <h1>Terms of use</h1>
+        <p>Last updated 27 November 2026</p>
       </div>
 
       <article class="card doc-body">
@@ -51,30 +51,24 @@
         <p><strong>Buffer gives no warranty for Telly and has no liability to you for it.</strong> Questions about Telly go to Telly, not to Buffer.</p>
 
         <h2>Watching in the background</h2>
-        <p>If you turn on watching, Telly keeps an encrypted copy of your Buffer connection so it can check your posts while you're away. Turn it off at any time from the dashboard; that deletes the stored connection. Watching is a convenience, not a guarantee: always check important posts yourself.</p>
+        <p>If you turn on watching, Telly keeps an encrypted copy of your Buffer connection so it can check your posts while you're away. Turn it off at any time on the Watching screen; that deletes the stored connection. Watching is a convenience, not a guarantee: always check important posts yourself.</p>
 
         <h2>Changes and ending</h2>
-        <p>Telly may change, pause or stop the service, or these terms. If the terms change in a way that matters, the date at the top changes and the dashboard will say so. You can stop at any time: use <strong>Delete my Telly data</strong>, then revoke Telly's access in your Buffer settings.</p>
+        <p>Telly may change, pause or stop the service, or these terms. If the terms change in a way that matters, the date at the top changes and the dashboard will say so. You can stop at any time: use <strong>Delete my Telly data</strong> in Settings, then revoke Telly's access in your Buffer settings.</p>
 
         <h2>Privacy</h2>
         <p>What Telly stores, and why, is on the <a href="/privacy.html">privacy page</a>.</p>
       </article>
-
-      <footer class="app-footer">
-        <div class="app-footer-top">
-          <a href="/?home" class="wordmark" aria-label="Telly home page">
-            <svg class="wordmark-mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="7" width="2" height="6" rx="1" /><rect x="4" y="3" width="2" height="14" rx="1" /><rect x="8" y="0" width="2" height="20" rx="1" /><rect x="12" y="5" width="2" height="10" rx="1" /><rect x="16" y="2" width="2" height="16" rx="1" /><rect x="20" y="6" width="2" height="8" rx="1" /><rect x="24" y="8" width="2" height="4" rx="1" /></svg>
-            <span>Telly</span>
-          </a>
-          <nav class="app-footer-links" aria-label="Footer">
-            <a class="u-link" href="/?home"><span>Home</span></a>
-            <a class="u-link" href="/auth/login"><span>Connect Buffer</span></a>
-            <a class="u-link" href="/privacy.html"><span>Privacy</span></a>
-            <a class="u-link" href="/terms.html" aria-current="page"><span>Terms</span></a>
-            <a class="u-link" href="/feedback.html"><span>Send feedback</span></a>
-          </nav>
-        </div>
-      </footer>
     </main>
+
+    <footer class="page-foot">
+      <p>Telly is an independent app built on the Buffer API. It is not made or endorsed by Buffer.</p>
+      <nav aria-label="Footer">
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html" aria-current="page">Terms</a>
+        <a href="/feedback.html">Feedback</a>
+        <a href="https://buffer.com" target="_blank" rel="noopener">Buffer</a>
+      </nav>
+    </footer>
   </body>
 </html>
