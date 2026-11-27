@@ -1,13 +1,17 @@
-// The dashboard around the campaign list: counts, the week ahead, the next posts, a calendar
-// and the side navigation. Everything shown comes from the saved campaigns.
+// The signed-in app around the campaigns: the side menu and the Dashboard, Scheduled posts,
+// Calendar, Watching and Feedback screens. Everything shown comes from the saved campaigns.
 
 const $ = (id) => document.getElementById(id);
 const DAY = 86400000;
 const KIND = { announcement: 'Announcement', reminder: 'Reminder', dayOf: 'Day of', followUp: 'Follow-up' };
 const TONE = { announcement: 'lime', reminder: 'sky', dayOf: 'amber' };
+// Screens opened from a campaign keep "Campaigns" highlighted in the menu.
+const SECTION = { 'view-editor': 'view-list', 'view-campaign': 'view-list', 'view-review': 'view-list' };
 
 let data = { campaigns: [], open: () => {}, create: () => {}, channel: () => '' };
+const health = new Map(); // what Buffer showed for each campaign, from the last check
 let month = null; // the first day of the month the calendar shows, in UTC
+let browsed = false; // true once you move through the calendar yourself
 
 function node(tag, className, text) {
   const out = document.createElement(tag);
@@ -27,6 +31,11 @@ const localDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1)
 const eventDate = (campaign) => campaign.facts.startsLocal.slice(0, 10);
 const isOff = (campaign) => ['cancelled', 'postponed'].includes(campaign.facts.status);
 const plural = (count, one, many) => (count === 1 ? one : many);
+const format = (date, options) => new Intl.DateTimeFormat('en-GB', options).format(date);
+const clock = (date) => format(date, { hour: 'numeric', minute: '2-digit', hour12: true });
+// The event's own wall-clock time, as the organiser entered it.
+const eventTime = (campaign) => clock(new Date(`${campaign.facts.startsLocal}:00`));
+const dayHeading = (iso) => format(new Date(`${iso}T12:00:00`), { weekday: 'long', day: 'numeric', month: 'long' });
 
 // Posts still to come, soonest first. Posts on hold are not in Buffer.
 function waiting(now) {
@@ -36,9 +45,52 @@ function waiting(now) {
     .sort((a, b) => a.due - b.due);
 }
 
+// The same post going to several channels at once is one line.
+function grouped(posts) {
+  const groups = new Map();
+  for (const item of posts) {
+    const key = `${item.campaign.id} ${item.post.kind} ${item.due.getTime()}`;
+    if (!groups.has(key)) groups.set(key, { ...item, channels: [] });
+    groups.get(key).channels.push(item.post.channelId);
+  }
+  return [...groups.values()];
+}
+
 const upcomingEvents = (today) => data.campaigns
   .filter((c) => !isOff(c) && eventDate(c) >= today)
   .sort((a, b) => a.facts.startsLocal.localeCompare(b.facts.startsLocal));
+
+// A line that opens a campaign: a tile, a few lines of text and anything on the right.
+function row(campaign, tile, lines, end) {
+  const item = node('li');
+  const open = button('row-button', () => data.open(campaign));
+  tile.setAttribute('aria-hidden', 'true');
+  const text = node('span', 'row-text');
+  lines.forEach((line, i) => text.append(node('span', i ? 'muted' : '', line)));
+  open.append(tile, text);
+  if (end) open.append(end);
+  item.append(open);
+  return item;
+}
+
+function postRow({ campaign, post, due, channels }, when) {
+  const kind = KIND[post.kind] || 'Post';
+  const where = channels.length === 1 ? data.channel(channels[0]) : `${channels.length} channels`;
+  return row(campaign, node('span', `dash-icon tone-${TONE[post.kind] || 'sage'}`, kind[0]),
+    [campaign.facts.title, `${kind} · ${when(due)}`, where]);
+}
+
+function dateTile(campaign) {
+  const date = new Date(`${eventDate(campaign)}T12:00:00`);
+  const tile = node('span', 'date-tile');
+  tile.append(node('b', '', date.getDate()), node('span', '', format(date, { month: 'short' })));
+  return tile;
+}
+
+const eventRow = (campaign) => row(campaign, dateTile(campaign), [campaign.facts.title, `${eventTime(campaign)} · ${campaign.facts.venue}`]);
+const emptyLine = (text) => node('li', 'muted empty-line', text);
+
+// ---- Dashboard ---------------------------------------------------------------------
 
 function renderStats(posts, events) {
   $('stat-events').textContent = events.length;
@@ -66,69 +118,21 @@ function renderWeek(posts, now) {
     fill.style.height = `${Math.round((counts[i] / most) * 100)}%`;
     bar.append(fill);
     const count = node('b', '', counts[i]);
-    const label = node('span', '', new Intl.DateTimeFormat('en-GB', { weekday: 'short' }).format(day));
+    const label = node('span', '', format(day, { weekday: 'short' }));
     for (const part of [count, bar, label]) part.setAttribute('aria-hidden', 'true');
-    const long = new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(day);
-    item.append(count, bar, label, node('span', 'sr-only', `${long}: ${counts[i]} ${plural(counts[i], 'post', 'posts')}`));
+    item.append(count, bar, label, node('span', 'sr-only', `${format(day, { weekday: 'long' })}: ${counts[i]} ${plural(counts[i], 'post', 'posts')}`));
     return item;
   }));
 }
 
 function renderNext(posts) {
-  const list = $('dash-next-list');
-  if (!posts.length) {
-    list.replaceChildren(node('li', 'muted small-text', 'No posts are waiting.'));
-    return;
-  }
-  // The same post going to several channels at once is one line.
-  const groups = new Map();
-  for (const item of posts) {
-    const key = `${item.campaign.id} ${item.post.kind} ${item.due.getTime()}`;
-    if (!groups.has(key)) groups.set(key, { ...item, channels: [] });
-    groups.get(key).channels.push(item.post.channelId);
-  }
-  list.replaceChildren(...[...groups.values()].slice(0, 4).map(({ campaign, post, due, channels }) => {
-    const item = node('li');
-    const open = button('dash-row', () => data.open(campaign));
-    const kind = KIND[post.kind] || 'Post';
-    const tile = node('span', `dash-icon tone-${TONE[post.kind] || 'sage'}`, kind[0]);
-    tile.setAttribute('aria-hidden', 'true');
-    const text = node('span', 'dash-row-text');
-    const when = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }).format(due);
-    const where = channels.length === 1 ? data.channel(channels[0]) : `${channels.length} channels`;
-    text.append(node('span', '', campaign.facts.title), node('span', 'muted', `${kind} · ${when}`), node('span', 'muted', where));
-    open.append(tile, text);
-    item.append(open);
-    return item;
-  }));
+  const next = grouped(posts).slice(0, 4);
+  const when = (due) => `${format(due, { weekday: 'short', day: 'numeric', month: 'short' })}, ${clock(due)}`;
+  $('dash-next-list').replaceChildren(...(next.length ? next.map((g) => postRow(g, when)) : [emptyLine('No posts are waiting.')]));
 }
 
-function renderCalendar() {
-  const today = localDate(new Date());
-  const year = month.getUTCFullYear();
-  const m = month.getUTCMonth();
-  const heading = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(month);
-  $('dash-month').textContent = heading;
-  const cells = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d) => node('span', 'dash-weekday', d));
-  for (let i = 0; i < (month.getUTCDay() + 6) % 7; i++) cells.push(node('span'));
-  const length = new Date(Date.UTC(year, m + 1, 0)).getUTCDate();
-  for (let day = 1; day <= length; day++) {
-    const date = new Date(month.getTime() + (day - 1) * DAY).toISOString().slice(0, 10);
-    const events = data.campaigns.filter((c) => eventDate(c) === date);
-    const classes = `dash-date${date === today ? ' is-today' : ''}`;
-    if (!events.length) {
-      cells.push(node('span', classes, day));
-      continue;
-    }
-    // With more than one event that day, the press opens the first; the others are in the list.
-    const cell = button(`${classes} has-event`, () => data.open(events[0]));
-    cell.textContent = day;
-    const names = events.map((c) => c.facts.title).join(', ');
-    cell.title = names;
-    cell.setAttribute('aria-label', `${day} ${heading}: open ${names}`);
-    cells.push(cell);
-  }
-  $('dash-days').replaceChildren(...cells);
+function renderUpcoming(events) {
+  $('dash-upcoming').replaceChildren(...(events.length ? events.slice(0, 4).map(eventRow) : [emptyLine('No events coming up.')]));
 }
 
 function renderHero(events) {
@@ -141,6 +145,82 @@ function renderHero(events) {
   action.onclick = () => (next ? data.open(next) : data.create());
 }
 
+// ---- Scheduled posts ----------------------------------------------------------------
+
+function renderPosts(posts) {
+  const box = $('posts-all');
+  if (!posts.length) {
+    box.replaceChildren(node('p', 'dash-card empty-line muted', 'No posts are waiting. Schedule a campaign and its posts show up here.'));
+    return;
+  }
+  const days = new Map();
+  for (const group of grouped(posts)) {
+    const day = localDate(group.due);
+    if (!days.has(day)) days.set(day, []);
+    days.get(day).push(group);
+  }
+  box.replaceChildren(...[...days].map(([day, groups]) => {
+    const section = node('section', 'dash-card');
+    const list = node('ul', 'rows');
+    list.append(...groups.map((g) => postRow(g, clock)));
+    section.append(node('h3', 'dash-h', dayHeading(day)), list);
+    return section;
+  }));
+}
+
+// ---- Calendar -------------------------------------------------------------------
+
+function renderCalendar() {
+  const today = localDate(new Date());
+  const year = month.getUTCFullYear();
+  const m = month.getUTCMonth();
+  const heading = format(month, { timeZone: 'UTC', month: 'long', year: 'numeric' });
+  $('cal-month').textContent = heading;
+  const cells = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => node('span', 'cal-weekday', d));
+  for (let i = 0; i < (month.getUTCDay() + 6) % 7; i++) cells.push(node('span', 'cal-cell is-blank'));
+  const length = new Date(Date.UTC(year, m + 1, 0)).getUTCDate();
+  const inMonth = [];
+  for (let day = 1; day <= length; day++) {
+    const date = new Date(month.getTime() + (day - 1) * DAY).toISOString().slice(0, 10);
+    const events = data.campaigns.filter((c) => eventDate(c) === date).sort((a, b) => a.facts.startsLocal.localeCompare(b.facts.startsLocal));
+    inMonth.push(...events);
+    const cell = node('div', `cal-cell${date === today ? ' is-today' : ''}`);
+    cell.append(node('span', 'cal-number', day));
+    for (const campaign of events) {
+      const chip = button(`cal-event${isOff(campaign) ? ' is-off' : ''}`, () => data.open(campaign));
+      chip.textContent = campaign.facts.title;
+      chip.title = `${campaign.facts.title}, ${eventTime(campaign)}`;
+      chip.setAttribute('aria-label', `Open ${campaign.facts.title}, ${day} ${heading}`);
+      cell.append(chip);
+    }
+    cells.push(cell);
+  }
+  while ((cells.length - 7) % 7) cells.push(node('span', 'cal-cell is-blank'));
+  $('cal-grid').replaceChildren(...cells);
+  $('cal-agenda-title').textContent = `Events in ${heading}`;
+  $('cal-agenda').replaceChildren(...(inMonth.length ? inMonth.map(eventRow) : [emptyLine('No events this month.')]));
+}
+
+// ---- Watching -----------------------------------------------------------------------
+
+function renderChecked() {
+  const live = data.campaigns.filter((c) => !isOff(c) && c.posts.some((p) => !p.held));
+  $('watch-campaigns').replaceChildren(...(live.length ? live.map((c) => {
+    const flags = node('span', 'drift');
+    for (const [label, tone] of health.get(c.id) || [['Checking', 'neutral']]) flags.append(node('span', `pill ${tone}`, label));
+    const count = c.posts.filter((p) => !p.held).length;
+    return row(c, dateTile(c), [c.facts.title, `${count} ${plural(count, 'post', 'posts')} scheduled`], flags);
+  }) : [emptyLine('No campaigns have scheduled posts yet.')]));
+}
+
+// flags: [label, tone] pairs for one campaign, from reading its posts back.
+export function setHealth(id, flags) {
+  health.set(id, flags);
+  renderChecked();
+}
+
+// ---- Search, drawing and navigation ---------------------------------------------
+
 function applySearch() {
   const wanted = $('dash-search').value.trim().toLowerCase();
   let shown = 0;
@@ -152,69 +232,110 @@ function applySearch() {
   $('dash-no-match').hidden = !wanted || shown > 0;
 }
 
+const monthOf = (iso) => {
+  const [y, m] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, 1));
+};
+
 // Call after the campaign list has been drawn, so the search applies to it.
 export function renderDashboard({ campaigns, open, create, channel }) {
   data = { campaigns, open, create, channel };
   const now = new Date();
   const posts = waiting(now);
   const events = upcomingEvents(localDate(now));
-  // The calendar opens on the next event's month, and then stays where you leave it.
-  if (!month) {
-    const [y, m] = (events[0] ? eventDate(events[0]) : localDate(now)).split('-').map(Number);
-    month = new Date(Date.UTC(y, m - 1, 1));
-  }
-  $('dash-overview').hidden = !campaigns.length;
-  $('dash-next-link').hidden = !campaigns.length;
-  $('dash-search').hidden = !campaigns.length;
-  if (!campaigns.length) $('dash-search').value = '';
+  // The calendar opens on the next event's month. Once you move through it, it stays put.
+  if (!browsed) month = monthOf(events[0] ? eventDate(events[0]) : localDate(now));
+  const none = !campaigns.length;
+  $('dash-overview').hidden = none;
+  $('dash-empty').hidden = !none;
+  $('dash-search').hidden = none;
+  for (const item of document.querySelectorAll('[data-new]')) item.hidden = none;
+  if (none) $('dash-search').value = '';
   renderStats(posts, events);
   renderWeek(posts, now);
   renderNext(posts);
-  renderCalendar();
+  renderUpcoming(events);
   renderHero(events);
+  renderPosts(posts);
+  renderCalendar();
+  renderChecked();
   applySearch();
 }
 
-// A different organization starts the calendar afresh.
-export function resetCalendar() { month = null; }
-
-// On a wide screen the account controls live in the side panel instead of the top bar.
-const wide = window.matchMedia('(min-width: 900px)');
-export function placeAccount() {
-  const onDashboard = !$('view-campaigns').hidden;
-  const inSide = onDashboard && wide.matches;
-  const bar = $('account-bar');
-  const target = inSide ? $('dash-account') : document.querySelector('.header-bar');
-  if (bar.parentElement !== target) target.append(bar);
-  document.body.classList.toggle('dash-wide', inSide);
-  $('app-shell').classList.toggle('is-dash', onDashboard);
+// A different organization starts the calendar and the checks afresh.
+export function resetDashboard() {
+  browsed = false;
+  health.clear();
 }
 
-export function startDashboard({ demo, name }) {
+function setMenu(open) {
+  $('app-shell').classList.toggle('nav-open', open);
+  $('app-menu').setAttribute('aria-expanded', String(open));
+  $('app-backdrop').hidden = !open;
+}
+
+// Highlights the screen you are on and closes the phone menu.
+export function markScreen(view) {
+  const section = SECTION[view] || view;
+  for (const link of document.querySelectorAll('.side-link, .side-account')) {
+    if (link.dataset.go === section) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  }
+  setMenu(false);
+}
+
+function setupFeedback() {
+  $('app-feedback-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const send = $('app-feedback-send');
+    const result = $('app-feedback-result');
+    const message = $('app-feedback-message').value.trim();
+    if (message.length < 3) {
+      result.textContent = 'Write a few words first.';
+      return;
+    }
+    send.disabled = true;
+    send.setAttribute('aria-busy', 'true');
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, page: '/app/feedback' }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || 'That didn’t send. Try again in a moment.');
+      $('app-feedback-message').value = '';
+      result.textContent = 'Sent. Thanks for letting us know.';
+    } catch (error) {
+      result.textContent = error.message;
+    } finally {
+      send.disabled = false;
+      send.removeAttribute('aria-busy');
+    }
+  });
+}
+
+export function startDashboard({ demo, name, go }) {
   const full = String(name || '').trim();
   const first = full.includes('@') ? '' : full.split(/\s+/)[0];
   $('campaigns-title').textContent = demo ? 'Your dashboard' : first ? `Welcome back, ${first}` : 'Welcome back';
+  $('side-name').textContent = demo ? 'Demo workspace' : full || 'Your account';
+  $('side-initial').textContent = (demo ? 'D' : full[0] || 'T').toUpperCase();
   if (demo) {
     const link = $('dash-buffer');
     link.href = '/auth/login';
     link.removeAttribute('target');
-    $('dash-buffer-label').textContent = 'Connect Buffer to schedule for real';
+    $('dash-buffer-label').textContent = 'Connect Buffer';
   }
-  wide.addEventListener('change', placeAccount);
+
+  for (const link of document.querySelectorAll('[data-go]')) link.addEventListener('click', () => go(link.dataset.go));
+  for (const item of document.querySelectorAll('[data-new]')) item.addEventListener('click', () => data.create());
+  $('app-menu').addEventListener('click', () => setMenu(!$('app-shell').classList.contains('nav-open')));
+  $('app-backdrop').addEventListener('click', () => setMenu(false));
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setMenu(false); });
+
   $('dash-search').addEventListener('input', applySearch);
-  const step = (by) => { month = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + by, 1)); renderCalendar(); };
-  $('dash-prev').addEventListener('click', () => step(-1));
-  $('dash-next-month').addEventListener('click', () => step(1));
-  const links = [...document.querySelectorAll('[data-jump]')];
-  for (const link of links) {
-    link.addEventListener('click', () => {
-      for (const other of links) other.removeAttribute('aria-current');
-      link.setAttribute('aria-current', 'page');
-      const target = $(link.dataset.jump);
-      // The overview panels are hidden until there is a campaign: go to the list instead.
-      const shown = target.offsetParent ? target : $('dash-campaigns');
-      shown.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      shown.focus({ preventScroll: true });
-    });
-  }
+  const step = (by) => { browsed = true; month = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + by, 1)); renderCalendar(); };
+  $('cal-prev').addEventListener('click', () => step(-1));
+  $('cal-next').addEventListener('click', () => step(1));
+  $('cal-today').addEventListener('click', () => { browsed = true; month = monthOf(localDate(new Date())); renderCalendar(); });
+  setupFeedback();
 }

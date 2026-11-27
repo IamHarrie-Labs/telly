@@ -2,7 +2,7 @@
 // textContent (via el()), never as HTML.
 
 import { startLanding } from '/landing.js';
-import { placeAccount, renderDashboard, resetCalendar, setAttention, startDashboard } from '/dashboard.js';
+import { markScreen, renderDashboard, resetDashboard, setAttention, setHealth, startDashboard } from '/dashboard.js';
 
 // Report unexpected errors in this page to the server (a few per visit at most), so problems
 // people hit show up in Telly's alerts instead of going unnoticed.
@@ -20,7 +20,11 @@ addEventListener('error', (event) => reportError(event.message, event.filename, 
 addEventListener('unhandledrejection', (event) => reportError(event.reason?.message || event.reason, 'promise'));
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = ['view-campaigns', 'view-editor', 'view-campaign', 'view-review'];
+// The screens in the menu. The others are opened from a campaign.
+const SCREENS = ['view-campaigns', 'view-list', 'view-posts', 'view-calendar', 'view-watch', 'view-feedback', 'view-settings'];
+const VIEWS = [...SCREENS, 'view-editor', 'view-campaign', 'view-review'];
+let lastScreen = 'view-campaigns'; // where Back returns to from a campaign
+const backToScreen = () => show(lastScreen);
 const KIND = { announcement: 'Announcement', reminder: 'Reminder', dayOf: 'Day of', followUp: 'Follow-up' };
 const FIELD = { title: 'Title', startsLocal: 'Date and time', timeZone: 'Timezone', venue: 'Venue', address: 'Address', price: 'Price', bookingUrl: 'Booking link', status: 'Status' };
 
@@ -128,7 +132,8 @@ function show(view, back = null) {
   void node.offsetWidth;
   node.classList.add('view-enter');
   state.back = back;
-  placeAccount();
+  if (SCREENS.includes(view)) lastScreen = view;
+  markScreen(view);
   syncHistory(view);
   window.scrollTo({ top: 0 });
 }
@@ -140,27 +145,38 @@ function show(view, back = null) {
 let restoring = false; // true while handling the browser's own Back
 let silentPops = 0; // rewinds Telly made itself, which must not trigger another step back
 function depthOf(view) {
-  if (view === 'view-campaigns') return 0;
+  if (SCREENS.includes(view)) return 0;
   if (view === 'view-review') return 2;
   if (view === 'view-editor') return state.editor?.mode === 'change' ? 2 : 1;
   return 1;
 }
+const screenUrl = (view) => `/?app${view === 'view-campaigns' ? '' : `#${view.slice(5)}`}`;
 function syncHistory(view) {
   if (restoring) return;
   const depth = depthOf(view);
   const current = history.state?.tellyDepth ?? 0;
   if (depth > current) history.pushState({ tellyDepth: depth }, '');
-  else if (depth === current) history.replaceState({ tellyDepth: depth }, '');
+  else if (depth === current) history.replaceState({ tellyDepth: depth }, '', depth ? undefined : screenUrl(view));
   else {
     silentPops += 1;
     history.go(depth - current);
   }
 }
 window.addEventListener('popstate', () => {
-  if (silentPops) { silentPops -= 1; return; }
+  if (silentPops) {
+    silentPops -= 1;
+    if (!silentPops && !history.state?.tellyDepth) history.replaceState(history.state, '', screenUrl(lastScreen));
+    return;
+  }
   if (!state.back) return;
   restoring = true;
   try { state.back(); } finally { restoring = false; }
+});
+
+// A screen's address typed or followed by hand opens that screen.
+window.addEventListener('hashchange', () => {
+  const view = `view-${location.hash.slice(1)}`;
+  if (document.body.dataset.mode === 'app' && SCREENS.includes(view) && $(view).hidden) show(view);
 });
 
 // Landing page for visitors, app shell once connected.
@@ -271,19 +287,23 @@ async function loadCampaigns() {
   renderCampaigns();
 }
 
+function emptyCard() {
+  return el('li', { class: 'card empty' },
+    el('p', { class: 'statement' }, 'Start your first campaign.'),
+    el('p', {}, 'Enter the event details once, or upload the flyer. Telly writes the announcement, reminder and day-of posts.'),
+    el('div', { class: 'row' },
+      el('button', { type: 'button', class: 'primary', onclick: () => openEditor('new') }, 'New campaign'),
+      state.demo ? el('button', { type: 'button', onclick: (event) => busy(event.currentTarget, trySample) }, 'Try a sample event') : null));
+}
+
 function renderCampaigns() {
   const list = $('campaign-list');
   list.replaceChildren();
-  $('new-campaign').hidden = !state.campaigns.length;
   const overview = () => renderDashboard({ campaigns: state.campaigns, open: openCampaign, create: () => openEditor('new'), channel: channelName });
   setAttention(0);
   if (!state.campaigns.length) {
-    list.append(el('li', { class: 'card empty' },
-      el('p', { class: 'statement' }, 'Start your first campaign.'),
-      el('p', {}, 'Enter the event details once, or upload the flyer. Telly writes the announcement, reminder and day-of posts.'),
-      el('div', { class: 'row' },
-        el('button', { type: 'button', class: 'primary', onclick: () => openEditor('new') }, 'New campaign'),
-        state.demo ? el('button', { type: 'button', onclick: (event) => busy(event.currentTarget, trySample) }, 'Try a sample event') : null)));
+    list.append(emptyCard());
+    $('dash-empty').replaceChildren(emptyCard());
     overview();
     return;
   }
@@ -317,6 +337,7 @@ async function checkDrift(checks) {
       ({ posts } = await api(`/api/campaigns/${campaign.id}/status`));
     } catch {
       node.replaceChildren();
+      setHealth(campaign.id, [['Could not check', 'neutral']]);
       continue;
     }
     const count = (types) => posts.filter((p) => types.includes(p.type)).length;
@@ -324,16 +345,20 @@ async function checkDrift(checks) {
     const missing = count(['missing']);
     const stale = count(['update', 'review']);
     const flags = [
-      edited && pill(`${edited} edited in Buffer`, 'warn'),
-      missing && pill(`${missing} removed in Buffer`, 'bad'),
-      stale && pill(`${stale} out of date`, 'warn'),
+      edited && [`${edited} edited in Buffer`, 'warn'],
+      missing && [`${missing} removed in Buffer`, 'bad'],
+      stale && [`${stale} out of date`, 'warn'],
     ].filter(Boolean);
-    node.replaceChildren(...(flags.length ? flags : [pill('In sync', 'ok')]));
+    const shown = flags.length ? flags : [['In sync', 'ok']];
+    node.replaceChildren(...shown.map(([label, tone]) => pill(label, tone)));
+    setHealth(campaign.id, shown);
     const title = flags.length ? 'Changed in Buffer since Telly last wrote it' : 'Matches what Buffer holds';
     node.title = title;
     if (flags.length) attention += 1;
   }
-  if (run === checkDrift.run) setAttention(attention);
+  if (run !== checkDrift.run) return;
+  for (const [campaign] of checks.slice(8)) setHealth(campaign.id, [['Open to check', 'neutral']]);
+  setAttention(attention);
 }
 checkDrift.run = 0;
 
@@ -389,7 +414,7 @@ function openEditor(mode, { status, title, help, prefill } = {}) {
     renderChannelOptions();
     $('flyer-drop').hidden = !state.flyer;
     $('flyer-status').textContent = '';
-    show('view-editor', () => show('view-campaigns'));
+    show('view-editor', backToScreen);
   } else {
     $('editor-title').textContent = title || 'Change a detail';
     $('editor-help').textContent = help || 'Edit what changed. Telly shows every affected post before anything in Buffer changes.';
@@ -683,7 +708,7 @@ function openCampaign(campaign) {
   $('tell-text').value = '';
   $('campaign-fix').hidden = true;
   $('campaign-checked').textContent = '';
-  show('view-campaign', () => show('view-campaigns'));
+  show('view-campaign', backToScreen);
 
   // Then check what Buffer actually holds, so hand edits and published posts are visible.
   refreshCampaign(campaign);
@@ -762,7 +787,7 @@ const RECHECK_MS = 5 * 60 * 1000;
 function recheck() {
   if (document.hidden || !state.orgId) return;
   if (!$('view-campaign').hidden && state.campaign) refreshCampaign(state.campaign);
-  else if (!$('view-campaigns').hidden && state.campaigns.length) renderCampaigns();
+  else if (['view-campaigns', 'view-list', 'view-watch'].some((id) => !$(id).hidden) && state.campaigns.length) renderCampaigns();
 }
 setInterval(recheck, RECHECK_MS);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) recheck(); });
@@ -1147,7 +1172,6 @@ $('apply').addEventListener('click', () => {
 for (const button of document.querySelectorAll('[data-back]')) {
   button.addEventListener('click', () => { showError(''); state.back?.(); }); // show() rewinds history to match
 }
-$('new-campaign').addEventListener('click', () => openEditor('new'));
 
 async function loadChannels() {
   state.channels = (await api(`/api/channels?organizationId=${encodeURIComponent(state.orgId)}`)).channels;
@@ -1185,30 +1209,27 @@ async function init() {
     return;
   }
 
-  $('account-bar').hidden = false;
   $('lab').hidden = !session.lab;
   state.flyer = Boolean(session.flyer);
   state.ideas = Boolean(session.ideas);
   state.orgs = session.account.organizations || [];
   state.demo = Boolean(session.demo);
-  $('demo-badge').hidden = !state.demo;
   $('demo-connect').hidden = !state.demo;
   $('demo-note').hidden = !state.demo;
-  $('account-line').hidden = state.demo;
   $('logout').textContent = state.demo ? 'Leave demo' : 'Disconnect';
-  $('account-line').textContent = session.account.name || session.account.email;
+  $('account-line').textContent = state.demo
+    ? 'You are in the demo workspace. Connect Buffer to schedule real posts.'
+    : `Connected to Buffer as ${session.account.name || session.account.email}.`;
   const select = $('org');
   select.append(...session.account.organizations.map((o) => el('option', { value: o.id }, o.name)));
-  select.hidden = session.account.organizations.length < 2;
+  $('org-field').hidden = session.account.organizations.length < 2;
   state.orgId = select.value;
   select.addEventListener('change', async () => {
     state.orgId = select.value;
-    resetCalendar();
+    resetDashboard();
     await Promise.all([loadChannels(), loadCampaigns()]).catch((e) => showError(e.message));
-    show('view-campaigns');
   });
 
-  $('delete-data').hidden = false;
   $('delete-data').addEventListener('click', () => {
     const ok = confirm('Delete every campaign Telly has saved for your account, and turn off watching? Posts already in Buffer stay in Buffer. This cannot be undone.');
     if (!ok) return;
@@ -1223,18 +1244,20 @@ async function init() {
 
   $('logout').addEventListener('click', async () => {
     await api('/auth/logout', { method: 'POST' });
-    location.reload();
+    location.assign('/');
   });
 
-  startDashboard({ demo: state.demo, name: session.account.name });
+  const wanted = `view-${location.hash.slice(1)}`;
+  startDashboard({ demo: state.demo, name: session.account.name, go: (view) => { showError(''); show(view); } });
   try {
     await Promise.all([loadChannels(), loadCampaigns()]);
   } catch (error) {
     showError(error.message);
   }
   setMode('app');
-  show('view-campaigns');
-  if (!state.demo) loadWatch();
+  show(SCREENS.includes(wanted) ? wanted : 'view-campaigns');
+  if (state.demo) noWatching('Checks while you are away need a Buffer connection. In the demo, Telly checks the practice queue while this page is open.', true);
+  else loadWatch();
 }
 
 // ---- Background watching -----------------------------------------------------------
@@ -1243,14 +1266,21 @@ async function loadWatch() {
   try {
     renderWatch(await api('/api/watch'));
   } catch {
-    $('watch').hidden = true;
+    noWatching("Telly couldn't load the watching settings. Reload the page to try again.");
   }
 }
 
+function noWatching(text, connect = false) {
+  $('watch').hidden = true;
+  $('watch-unavailable').hidden = false;
+  $('watch-unavailable-text').textContent = text;
+  $('watch-connect').hidden = !connect;
+}
+
 function renderWatch(watch) {
-  $('watch').hidden = !watch.available;
-  $('dash-watch-link').hidden = !watch.available;
-  if (!watch.available) return;
+  if (!watch.available) return noWatching('Checks while you are away are not switched on for this site.');
+  $('watch').hidden = false;
+  $('watch-unavailable').hidden = true;
   const where = watch.emails ? (watch.enabled && watch.email ? `emails ${watch.email}` : 'emails you') : 'shows it here';
   $('watch-pill').replaceChildren(watch.enabled ? pill('On', 'ok') : pill('Off', 'neutral'));
   const every = watch.everyHours === 1 ? 'every hour' : `every ${watch.everyHours || 3} hours`;
