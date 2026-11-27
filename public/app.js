@@ -1283,11 +1283,11 @@ function renderWatch(watch) {
   $('watch-unavailable').hidden = true;
   const where = watch.emails ? (watch.enabled && watch.email ? `emails ${watch.email}` : 'emails you') : 'shows it here';
   $('watch-pill').replaceChildren(watch.enabled ? pill('On', 'ok') : pill('Off', 'neutral'));
-  const every = watch.everyHours === 1 ? 'every hour' : `every ${watch.everyHours || 3} hours`;
-  const when = `ten minutes after each post is due, and ${every} in between`;
+  const when = 'from time to time';
+  const timing = 'Checks run on a schedule and can be hours apart.';
   $('watch-explain').textContent = watch.enabled
-    ? `Telly checks your upcoming posts in Buffer ${when}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. It keeps going after you disconnect. Turn it off here to stop.`
-    : `Telly can check your upcoming posts in Buffer ${when}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. To do that, it keeps your Buffer connection in its database, encrypted. Turning watching off deletes it.`;
+    ? `Telly checks your upcoming posts in Buffer ${when}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. ${timing} It keeps going after you disconnect. Turn it off here to stop.`
+    : `Telly can check your upcoming posts in Buffer ${when}, even with this page closed, and ${where} if a post fails, a channel disconnects or pauses, or posts fall out of date. ${timing} To do that, it keeps your Buffer connection in its database, encrypted. Turning watching off deletes it.`;
 
   const issues = watch.enabled ? watch.issues || [] : [];
   $('watch-issues').replaceChildren(...issues.map((issue) => el('li', {}, issue.text)));
@@ -1298,10 +1298,6 @@ function renderWatch(watch) {
   else if (watch.enabled && watch.checkedAt) {
     const at = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(watch.checkedAt));
     status = issues.length ? `Last checked ${at}.` : `Last checked ${at}. No issues found.`;
-    if (watch.nextCheckAt) {
-      const next = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(watch.nextCheckAt));
-      status += ` Next check ${next}, just after your next post goes out.`;
-    }
   } else if (watch.enabled) status = 'Background checks are on. The time of the first completed check will appear here.';
   $('watch-status').textContent = status;
 

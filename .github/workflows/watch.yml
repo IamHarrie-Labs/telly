@@ -1,7 +1,7 @@
 name: Uptime and watching
 
-# Every ten minutes: check the live site is up, then run background watching. Each run only
-# checks the organisers who are due, so most runs make no Buffer requests at all.
+# Scheduled every ten minutes, though GitHub often starts scheduled runs hours apart: check the
+# live site is up, then run background watching. Each run only checks the organisers who are due.
 # GitHub emails the repository owner when a scheduled run fails, so this doubles as the
 # uptime alert. Needs one repository secret, CRON_SECRET, matching the one in Vercel.
 on:

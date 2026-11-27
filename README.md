@@ -33,7 +33,7 @@ Change a detail once. Telly reads each post back from Buffer, shows what would c
 - **Posts already sent:** Telly suggests follow-up wording.
 - **History and undo** for changes that haven't gone out.
 - **An event page** that always shows the latest details, with a calendar entry that updates itself.
-- **Watching:** background checks for posts that failed or a paused queue. Email alerts are sent when a Resend key is configured.
+- **Watching:** occasional background checks, on a schedule, for posts that failed or a paused queue. Email alerts are sent when a Resend key is configured.
 - **Team use:** campaigns are shared within a Buffer organization.
 - **Save to Buffer:** posts as ideas, and details as a snippet on Buffer plans that include snippets.
 - **Repeat events** and a **Listen** button to hear a post before it goes out.

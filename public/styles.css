@@ -953,9 +953,23 @@ body[data-mode='app']:has(#app-shell) .toasts { top: 16px; }
 .doc-page .app-main > .view { max-width: 760px; margin: 0; }
 .doc-note { max-width: 760px; margin: 4px 0 0; font-size: 0.8125rem; color: var(--muted); }
 
-/* ---- Dead ends: missing pages and a sign-in that couldn't finish ------------------- */
-body.msg-page { display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; padding: 16px; background: #f4f4f1; }
-.msg { display: grid; justify-items: start; gap: 14px; width: 100%; max-width: 460px; padding: 32px; background: #fff; border: 1px solid #e4e4dc; border-radius: var(--r-lg); }
-.msg h1 { font-weight: 600; font-size: 1.75rem; letter-spacing: -0.04em; line-height: 1.15; margin-top: 8px; }
-.msg p { margin: 0; color: var(--ink-2); }
-.msg-action { display: inline-flex; align-items: center; min-height: 46px; padding: 0 24px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 500; text-decoration: none; }
+/* ---- Event pages and dead ends ------------------------------------------------------ */
+.page-head h1 { font-weight: 600; font-size: clamp(1.625rem, 3vw, 2.125rem); letter-spacing: -0.04em; line-height: 1.15; overflow-wrap: anywhere; }
+.page-head > div { min-width: 0; }
+.ev-banner { margin: 0; padding: 14px 18px; border-radius: var(--r-md); background: var(--warn-bg); color: var(--warn); font-weight: 500; }
+.ev-facts { margin: 0; padding-top: 4px; padding-bottom: 4px; }
+.ev-facts > div { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.ev-facts > div:last-child { border-bottom: 0; }
+.ev-facts dt { flex: none; width: 64px; padding-top: 2px; font-size: 0.8125rem; color: var(--muted); }
+.ev-facts dd { margin: 0; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+.ev-facts small { display: block; font-weight: 400; font-size: 0.875rem; color: var(--muted); }
+.ev-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.dash-card .ev-actions { margin-top: 16px; }
+.ev-button { display: inline-flex; align-items: center; min-height: 46px; padding: 0 22px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 0.9375rem; font-weight: 500; text-decoration: none; }
+.ev-button:hover { border-color: var(--ink); }
+.ev-button.primary { background: var(--lime); border-color: var(--lime); }
+.ev-button.dark { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ev-log { margin: 0; }
+.ev-log li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ev-log li:last-child { border-bottom: 0; }
+.ev-log time { display: block; font-size: 0.8125rem; color: var(--muted); }
