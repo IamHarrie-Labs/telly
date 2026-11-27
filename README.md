@@ -8,6 +8,14 @@ Telly schedules the posts for an event in Buffer, and keeps them right when plan
 
 Built for [Buffer Commit](https://buffer.com/api/commit).
 
+## See it in 60 seconds
+
+1. Open [usetelly.xyz/demo](https://usetelly.xyz/demo). No account is needed, and nothing is posted anywhere.
+2. Press **Try a sample event**. Telly schedules an announcement, a reminder and a day-of post on two practice channels, and the reminder is then edited by hand, as someone might in Buffer.
+3. A change is already typed into **Tell Telly what changed**. Press **Show the changes**.
+4. Check the review: old lines crossed out, the event card redrawn, and the hand-edited post waiting for you to choose **Keep mine** or **Use correction**. Press **Apply**.
+5. Open the event page from the campaign. It shows the new details.
+
 ## The problem
 
 The venue moves, or the start time slips, and three posts are already scheduled with the old details. You dig through the queue, fix one, forget another, and someone turns up at the wrong place.

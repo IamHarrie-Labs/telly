@@ -2,6 +2,7 @@
 // textContent (via el()), never as HTML.
 
 import { startLanding } from '/landing.js';
+import { placeAccount, renderDashboard, resetCalendar, setAttention, startDashboard } from '/dashboard.js';
 
 // Report unexpected errors in this page to the server (a few per visit at most), so problems
 // people hit show up in Telly's alerts instead of going unnoticed.
@@ -127,6 +128,7 @@ function show(view, back = null) {
   void node.offsetWidth;
   node.classList.add('view-enter');
   state.back = back;
+  placeAccount();
   syncHistory(view);
   window.scrollTo({ top: 0 });
 }
@@ -273,11 +275,16 @@ function renderCampaigns() {
   const list = $('campaign-list');
   list.replaceChildren();
   $('new-campaign').hidden = !state.campaigns.length;
+  const overview = () => renderDashboard({ campaigns: state.campaigns, open: openCampaign, create: () => openEditor('new'), channel: channelName });
+  setAttention(0);
   if (!state.campaigns.length) {
     list.append(el('li', { class: 'card empty' },
       el('p', { class: 'statement' }, 'Start your first campaign.'),
       el('p', {}, 'Enter the event details once, or upload the flyer. Telly writes the announcement, reminder and day-of posts.'),
-      el('button', { type: 'button', class: 'primary', onclick: () => openEditor('new') }, 'New campaign')));
+      el('div', { class: 'row' },
+        el('button', { type: 'button', class: 'primary', onclick: () => openEditor('new') }, 'New campaign'),
+        state.demo ? el('button', { type: 'button', onclick: (event) => busy(event.currentTarget, trySample) }, 'Try a sample event') : null)));
+    overview();
     return;
   }
   const checks = [];
@@ -292,6 +299,7 @@ function renderCampaigns() {
         drift)));
     if (!isOff(campaign.facts.status) && liveCount(campaign)) checks.push([campaign, drift]);
   }
+  overview();
   checkDrift(checks);
 }
 
@@ -299,6 +307,8 @@ function renderCampaigns() {
 // last wrote it: a hand edit, a removed post, or a post that no longer matches the details.
 async function checkDrift(checks) {
   const run = ++checkDrift.run;
+  let attention = 0;
+  if (checks.length) setAttention(null);
   for (const [campaign, node] of checks.slice(0, 8)) {
     if (run !== checkDrift.run) return; // the list was redrawn
     node.replaceChildren(pill('Checking Buffer', 'neutral checking'));
@@ -321,7 +331,9 @@ async function checkDrift(checks) {
     node.replaceChildren(...(flags.length ? flags : [pill('In sync', 'ok')]));
     const title = flags.length ? 'Changed in Buffer since Telly last wrote it' : 'Matches what Buffer holds';
     node.title = title;
+    if (flags.length) attention += 1;
   }
+  if (run === checkDrift.run) setAttention(attention);
 }
 checkDrift.run = 0;
 
@@ -406,6 +418,56 @@ async function shrinkImage(file) {
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close?.();
   return canvas.toDataURL('image/jpeg', 0.85);
+}
+
+// Demo only: a ready-made event so a first look takes seconds. It is scheduled in the practice
+// queue the normal way, then the reminder is "edited in Buffer" by hand, so the change review
+// shows both an update and a post you rewrote yourself.
+async function trySample() {
+  const usable = state.channels.filter((c) => !c.isDisconnected);
+  if (!usable.length) throw new Error('No practice channels are connected.');
+  const today = new Date(`${localToday()}T12:00:00Z`);
+  const ahead = ((4 - today.getUTCDay() + 7) % 7) + 7; // the Thursday after next
+  const day = new Date(today.getTime() + ahead * 86400000).toISOString().slice(0, 10);
+  const facts = {
+    title: 'Open Mic Night', startsLocal: `${day}T19:00`,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London',
+    venue: 'The Old Library', address: '12 Market Street', price: 'Free', bookingUrl: '',
+  };
+  // Pressing it again opens the sample you already have rather than adding another.
+  const had = state.campaigns.find((c) => c.facts.title === facts.title && c.facts.startsLocal === facts.startsLocal && c.facts.status === 'upcoming');
+  if (had) {
+    openCampaign(had);
+    suggestChange(day);
+    return;
+  }
+  const channelIds = usable.map((c) => c.id);
+  const services = servicesFor(channelIds);
+  const { pageId } = await api('/api/campaigns/preview', { method: 'POST', body: JSON.stringify({ facts, channelIds, services }) });
+  const { campaign } = await api('/api/campaigns', {
+    method: 'POST', body: JSON.stringify({ facts, channelIds, services, pageId, withCard: true, organizationId: state.orgId }),
+  });
+  const reminder = campaign.posts.find((p) => p.kind === 'reminder');
+  if (reminder) {
+    const text = `Two days to go! Bring a song, a poem or just yourself.\n\n${reminder.lastWrittenText}`;
+    await api(`/api/demo/posts/${encodeURIComponent(reminder.postId)}`, { method: 'POST', body: JSON.stringify({ action: 'edit', text }) });
+  }
+  await loadCampaigns();
+  openCampaign(campaign);
+  suggestChange(day);
+}
+
+// Fills in a change to try on the sample: the day after, an hour later.
+function suggestChange(day) {
+  const ready = 'Sample event ready. Its reminder was edited by hand, so you can see how Telly treats your own wording.';
+  if (!state.flyer) {
+    showNotice(`${ready} Press "Change a detail" and move the date to see what Telly would fix.`);
+    return;
+  }
+  const next = new Date(new Date(`${day}T12:00:00Z`).getTime() + 86400000);
+  const said = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'long' }).format(next);
+  $('tell-text').value = `Moved to Friday ${said} at 8pm, same place`;
+  showNotice(`${ready} Press "Show the changes" to see what Telly would fix.`);
 }
 
 function localToday() {
@@ -840,7 +902,7 @@ $('save-ideas').addEventListener('click', () => busy($('save-ideas'), async () =
 // Demo only: act on a post the way an organiser might directly in Buffer, then see Telly
 // catch it. These change the practice queue, never Telly's own record of the campaign.
 function practiceRow(campaign, post, liveText) {
-  const row = el('div', { class: 'practice' }, el('span', { class: 'practice-label' }, 'Practice, as if in Buffer'));
+  const row = el('div', { class: 'practice' }, el('span', { class: 'practice-label' }, 'Simulate in Buffer'));
   const refresh = async (message) => {
     const { posts } = await api(`/api/campaigns/${campaign.id}/status`);
     if (state.campaign === campaign) renderCampaignPosts(campaign, new Map(posts.map((p) => [p.postId, p])));
@@ -1141,6 +1203,7 @@ async function init() {
   state.orgId = select.value;
   select.addEventListener('change', async () => {
     state.orgId = select.value;
+    resetCalendar();
     await Promise.all([loadChannels(), loadCampaigns()]).catch((e) => showError(e.message));
     show('view-campaigns');
   });
@@ -1163,6 +1226,7 @@ async function init() {
     location.reload();
   });
 
+  startDashboard({ demo: state.demo, name: session.account.name });
   try {
     await Promise.all([loadChannels(), loadCampaigns()]);
   } catch (error) {
@@ -1185,6 +1249,7 @@ async function loadWatch() {
 
 function renderWatch(watch) {
   $('watch').hidden = !watch.available;
+  $('dash-watch-link').hidden = !watch.available;
   if (!watch.available) return;
   const where = watch.emails ? (watch.enabled && watch.email ? `emails ${watch.email}` : 'emails you') : 'shows it here';
   $('watch-pill').replaceChildren(watch.enabled ? pill('On', 'ok') : pill('Off', 'neutral'));
