@@ -74,6 +74,17 @@ test('the event page hides booking once sold out, and says when the event has fi
   assert.match(renderEventPage(campaign, new Date('2027-01-01T00:00:00Z')), /This event has finished/);
 });
 
+test('the event page works in every status, including cancelled, which has no event card', () => {
+  for (const status of ['upcoming', 'soldOut', 'postponed', 'cancelled']) {
+    const html = renderEventPage({ ...campaign, facts: { ...campaign.facts, status } }, NOW);
+    assert.match(html, /<h1>/, status);
+    assert.equal(html.includes('og:image'), status !== 'cancelled', status);
+  }
+  const cancelled = renderEventPage({ ...campaign, facts: { ...campaign.facts, status: 'cancelled' } }, NOW);
+  assert.match(cancelled, /This event has been cancelled/);
+  assert.doesNotMatch(cancelled, /Book or find out more|Add to calendar/);
+});
+
 test('the calendar file is valid, stable and folds long lines', () => {
   const ics = renderCalendar({ ...campaign, facts: { ...campaign.facts, title: 'A'.repeat(120) } }, NOW);
   assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
