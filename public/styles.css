@@ -1009,3 +1009,21 @@ button.icon-btn[aria-busy='true']::after { display: none; }
 .name-form label { margin: 0; }
 .cal-cell.is-other.is-today .cal-number { background: var(--lime); color: var(--ink); }
 #app-shell .is-other .cal-event:hover { background: #fff; color: var(--ink); }
+
+/* ---- Calendar: posts on the day they go out ------------------------------------------ */
+.cal-key { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -4px 0 12px; padding: 0; list-style: none; color: var(--muted); font-size: 0.75rem; }
+.cal-key li { display: flex; align-items: center; gap: 6px; }
+.cal-key-event { width: 18px; height: 10px; border-radius: 4px; background: var(--lime); }
+.cal-post-kind { flex: none; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: var(--ink); font-size: 0.625rem; font-weight: 600; line-height: 1; }
+#app-shell .cal-post { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 0; padding: 2px 6px 2px 2px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font-size: 0.6875rem; font-weight: 500; text-align: left; white-space: nowrap; overflow: hidden; }
+#app-shell .cal-post:hover { border-color: var(--ink); }
+.cal-post-time { overflow: hidden; text-overflow: ellipsis; }
+#app-shell .cal-post.is-sent { opacity: 0.55; }
+#app-shell .is-other .cal-post { border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.08); color: #fff; }
+#app-shell .is-other .cal-post:hover { border-color: #fff; }
+@media (max-width: 640px) {
+  #app-shell .cal-post { width: 10px; height: 10px; padding: 0; gap: 0; border: 0; border-radius: 50%; overflow: hidden; }
+  #app-shell .cal-post .cal-post-kind { width: 10px; height: 10px; font-size: 0; }
+  #app-shell .cal-post .cal-post-time { display: none; }
+  .cal-key { gap: 6px 12px; }
+}

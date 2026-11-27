@@ -36,6 +36,8 @@ const plural = (count, one, many) => (count === 1 ? one : many);
 const format = (date, options) => new Intl.DateTimeFormat('en-GB', options).format(date);
 const clock = (date) => format(date, { hour: 'numeric', minute: '2-digit', hour12: true });
 // The event's own wall-clock time, as the organiser entered it.
+// "9am", "6:30pm": short enough to sit on a calendar day.
+const shortClock = (date) => clock(date).replace(':00', '').replace(/\s/g, '').toLowerCase();
 const eventTime = (campaign) => clock(new Date(`${campaign.facts.startsLocal}:00`));
 const dayHeading = (iso) => format(new Date(`${iso}T12:00:00`), { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -184,6 +186,18 @@ function renderCalendar() {
   const lead = (month.getUTCDay() + 6) % 7;
   const total = Math.ceil((lead + length) / 7) * 7;
   const inMonth = [];
+  // Every post Telly scheduled, on the day it goes out on your own clock (as Scheduled posts shows).
+  // Posts on hold are out of Buffer, so they don't appear. Ones already sent stay, faded.
+  const now = new Date();
+  const sends = new Map();
+  for (const group of grouped(data.campaigns.flatMap((campaign) => campaign.posts
+    .filter((p) => !p.held)
+    .map((post) => ({ campaign, post, due: new Date(post.lastWrittenDueAt) }))))) {
+    const day = localDate(group.due);
+    if (!sends.has(day)) sends.set(day, []);
+    sends.get(day).push(group);
+  }
+  for (const list of sends.values()) list.sort((a, b) => a.due - b.due);
   for (let i = 0; i < total; i++) {
     const at = new Date(month.getTime() + (i - lead) * DAY);
     const date = at.toISOString().slice(0, 10);
@@ -200,6 +214,16 @@ function renderCalendar() {
       chip.title = `${campaign.facts.title}, ${eventTime(campaign)}`;
       chip.setAttribute('aria-label', `Open ${campaign.facts.title}, ${label}`);
       cell.append(chip);
+    }
+    for (const { campaign, post, due, channels } of sends.get(date) || []) {
+      const kind = KIND[post.kind] || 'Post';
+      const sent = due <= now;
+      const where = channels.length === 1 ? data.channel(channels[0]) : `${channels.length} channels`;
+      const marker = button(`cal-post${sent ? ' is-sent' : ''}`, () => data.open(campaign));
+      marker.append(node('span', `cal-post-kind tone-${TONE[post.kind] || 'sage'}`, kind[0]), node('span', 'cal-post-time', shortClock(due)));
+      marker.title = `${kind} for ${campaign.facts.title}, ${clock(due)}, ${where}${sent ? ' (sent)' : ''}`;
+      marker.setAttribute('aria-label', `${kind} for ${campaign.facts.title}, ${label} at ${clock(due)}${sent ? ', sent' : ''}. Open the campaign`);
+      cell.append(marker);
     }
     cells.push(cell);
   }
