@@ -17,12 +17,12 @@
     "ship": "npm run check && vercel deploy --prod"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.8.0",
-    "@neondatabase/serverless": "^1.2.0",
+    "@anthropic-ai/sdk": "^1.14.0",
+    "@neondatabase/serverless": "^1.2.1",
     "@resvg/resvg-js": "^2.6.2",
     "express": "^4.22.3",
-    "iron-session": "^9.0.1",
-    "satori": "^0.18.3"
+    "iron-session": "^9.1.1",
+    "satori": "^0.63.2"
   },
   "devDependencies": {
     "selfsigned": "^5.5.0"
